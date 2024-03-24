@@ -1,3 +1,19 @@
+
+# Getting started
+
+- Clone the Git repository to your local machine with `git clone`.
+- Navigate to the project directory using `cd`.
+- Create a new branch with the Jira issue key in the name using `git branch <issue-key>-<branch-name>`. For example, `git branch SRP-1-DBAL`.
+- Switch to the new branch with `git checkout <issue-key>-<branch-name>`.
+- Develop your code on this branch and commit changes with `git commit`.
+- Push the branch to the remote repository with `git push`.
+
+
+Remember to replace <issue-key>-<branch-name> with your specific Jira issue key and desired branch name.
+
+
+----
+
 # Introduction
 
 The purpose of this repository is to empirically prove the hypothesis that "regularization strength is inversely proportional to the AUBC or Loss". In order to achieve this, we will implement an active learning training model for all of our selected datasets and chosen baseline acquisition functions, as mentioned in point 2.
@@ -10,8 +26,4 @@ In the hypothesis phase, we will plot the trend of the regularization hyperparam
 
 Additionally, each group member will initially implement their own Acquisition function, which will later be combined to form a comprehensive solution.
 
----
 
-# Start developing
-
-For starting to develop the code. you need to create a branch from the main branch, naming it using the respective issue key in the branch name. Such as <issue-key>-<branch-name>. For example, SRP-1-DBAL.
