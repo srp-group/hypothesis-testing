@@ -11,7 +11,6 @@
 
 Remember to replace <issue-key>-<branch-name> with your specific Jira issue key and desired branch name.
 
-
 ----
 
 # Introduction
