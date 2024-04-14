@@ -30,14 +30,15 @@ def read_file(filename, dataset):
     return pd.DataFrame(data, columns=columns)
 
 
-# Read each file and assign the returned df
-dna_train = read_file(config['DNA']['train'], 'DNA')
-dna_test = read_file(config['DNA']['test'], 'DNA')
-dna_val = read_file(config['DNA']['val'], 'DNA')
+if __name__ == '__main__':
+    # Read each file and assign the returned df
+    dna_train = read_file(config['DNA']['train'], 'DNA')
+    dna_test = read_file(config['DNA']['test'], 'DNA')
+    dna_val = read_file(config['DNA']['val'], 'DNA')
 
-splice_train = read_file(config['SPLICE']['train'], 'SPLICE')
-splice_test = read_file(config['SPLICE']['test'], 'SPLICE')
+    splice_train = read_file(config['SPLICE']['train'], 'SPLICE')
+    splice_test = read_file(config['SPLICE']['test'], 'SPLICE')
 
-protein_train = read_file(config['PROTEIN']['train'], 'PROTEIN')
-protein_test = read_file(config['PROTEIN']['test'], 'PROTEIN')
-protein_val = read_file(config['PROTEIN']['val'], 'PROTEIN')
+    protein_train = read_file(config['PROTEIN']['train'], 'PROTEIN')
+    protein_test = read_file(config['PROTEIN']['test'], 'PROTEIN')
+    protein_val = read_file(config['PROTEIN']['val'], 'PROTEIN')
