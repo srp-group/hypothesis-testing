@@ -1,6 +1,6 @@
 # Getting Started
 
-The parameter list:
+The argument list:
 
 ||name|descrption|default|
 |----------|----------|----------|----------|
@@ -12,4 +12,5 @@ The parameter list:
 6|`-hpo_mode`|from the values {constant, online}|
 7|`--split`|{whole, initial, static, dynamic}|
 
-When `-hpo_mode` is constant, `--split` must be whole or initial and When `-hpo_mode` is online, `--split` must be static or dynamic
+When `-hpo_mode` is constant, `--split` must be whole or initial and When `-hpo_mode` is online, `--split` must be static or dynamic.
+
