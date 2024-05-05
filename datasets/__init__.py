@@ -1,1 +1,1 @@
-from .dna import DnaDataset
+from .dna_dataset import DnaDataset
