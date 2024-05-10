@@ -9,5 +9,6 @@ config.read('params.ini')
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--d', type=str, help='Dataset name')
+    parser.add_argument('--r', type=int, help='random seed')
     args = parser.parse_args()
-    ActiveLearning(dataset_name=args.d)
+    ActiveLearning(dataset_name=args.d, random_seed=args.r)
