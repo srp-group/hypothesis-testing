@@ -13,6 +13,7 @@ config.read('params.ini')
 
 class Pool():
     def __init__(self, dataset_name:str, random_seed: int) -> None:
+        self.dataset_name = dataset_name
         self.dataset_config = config[dataset_name.upper()]
         self.default_config = config['DEFAULT']
         self.random_seed = random_seed
@@ -50,6 +51,13 @@ class Pool():
         val_loader = DataLoader(Subset(self.dataset, self.idx_val), batch_size=int(self.dataset_config['batch_size']), shuffle=False)
         test_loader = DataLoader(Subset(self.dataset, self.idx_test), batch_size=int(self.dataset_config['batch_size']), shuffle=False)
         return train_loader, val_loader, test_loader
+    
+    def get_test_loaders(self) -> tuple:
+        '''Returns the train and test loaders respectively. train is consisted of the union train and validation sets.'''
+        train_loader = DataLoader(Subset(self.dataset, np.concatenate((
+            self.idx_train, self.idx_val))), batch_size=int(self.dataset_config['batch_size']), shuffle=True)
+        test_loader = DataLoader(Subset(self.dataset, self.idx_test), batch_size=int(self.dataset_config['batch_size']), shuffle=False)
+        return train_loader, test_loader
     
     def add_labeled_data(self, idx: int) -> None:
         '''Add labeled data to the pool.'''
