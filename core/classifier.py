@@ -54,11 +54,10 @@ class Classifier():
         dropout_rate = trial.suggest_float("dropout_rate", 1e-3, 0.5)
         l2_reg = trial.suggest_float("l2_reg", 1e-6, 1e-1, log=True)
         # CREATE MODEL
-        if(self.pool.dataset_name.lower() == "dna"):
-            model = MLP(int(self.pool.dataset_config['n_features']),
-                            int(self.pool.dataset_config['n_classes']),
-                            l2_reg,
-                            dropout_rate).to(self.device)
+        model = MLP(int(self.pool.dataset_config['n_features']),
+                        int(self.pool.dataset_config['n_classes']),
+                        l2_reg,
+                        dropout_rate).to(self.device)
         train_loader, val_loader, test_loader = self.pool.get_loaders()
         (train_loss, train_metrics),  (val_loss, val_metrics) = self.fit(train_loader, val_loader, model, trial)
         return val_loss
@@ -73,11 +72,10 @@ class Classifier():
     
     def test(self, l2_reg: float, dropout_rate: float) -> tuple:
         # CREATE MODEL
-        if(self.pool.dataset_name.lower() == "dna"):
-            model = MLP(int(self.pool.dataset_config['n_features']),
-                            int(self.pool.dataset_config['n_classes']),
-                            l2_reg,
-                            dropout_rate).to(self.device)
+        model = MLP(int(self.pool.dataset_config['n_features']),
+                        int(self.pool.dataset_config['n_classes']),
+                        l2_reg,
+                        dropout_rate).to(self.device)
         model.eval()
         train_loader, test_loader = self.pool.get_test_loaders()
         (train_loss, train_metrics), (test_loss, test_metrics) = self.fit(
