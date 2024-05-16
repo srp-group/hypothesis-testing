@@ -75,7 +75,6 @@ class Pool():
     def add_labeled_data(self, idx: int) -> None:
         '''Add labeled data to the pool.'''
         self.idx_label = np.concatenate((self.idx_label, [idx]))
-        #self.idx_train = np.concatenate((self.idx_train, [idx]))
 
     def get_unlabeled_indecies(self) -> np.ndarray:
         '''Returns the unlabeled data.'''

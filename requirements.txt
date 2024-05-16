@@ -4,3 +4,4 @@ configparser
 requests
 sklearn
 torch
+matplotlib

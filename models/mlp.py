@@ -16,7 +16,7 @@ class MLP(nn.Module):
         self.layers.add_module(f"activation_1", nn.ReLU())
         self.layers.add_module(f"dropout_1", nn.Dropout(dropout_rate))
         self.layers.add_module(f"dense_2", nn.Linear(n_features//10, n_classes))
-        self.layers.add_module(f"activation_2", nn.Softmax())
+        self.layers.add_module(f"activation_2", nn.Softmax(dim=1))
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.parameters(), weight_decay=l2_reg)
         self.metric = metrics.MulticlassAccuracy(num_classes=n_classes)

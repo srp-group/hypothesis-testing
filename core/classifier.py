@@ -5,7 +5,10 @@ import optuna
 import core
 from typing import Optional
 from optuna.trial import Trial
+import logging
 
+# Set logging level to ERROR - For a more clean output terminal
+optuna.logging.set_verbosity(optuna.logging.ERROR)
 
 class Classifier():
     def __init__(self, pool: core.Pool) -> None:
