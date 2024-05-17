@@ -1,7 +1,7 @@
 numpy
 pandas
-configparser
 requests
 sklearn
 torch
 matplotlib
+scipy
