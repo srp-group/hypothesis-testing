@@ -31,6 +31,11 @@ class ActiveLearning:
         self.data_logger = core.Logger(dataset_name=self.dataset_name, date_path=date_path)
 
     def run(self) -> None:
+        current_file_path = os.path.abspath(__file__)
+        root_dir = os.path.join(os.path.dirname(current_file_path), '..')
+        root_dir = os.path.normpath(root_dir)
+        print(root_dir)
+        return
         test_loss_list = []
         best_dropout_rate_list = []
         best_l2_reg_list = []

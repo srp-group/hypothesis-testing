@@ -19,13 +19,13 @@ class Logger:
         # Check if the folder exists
         if not os.path.exists(f"{root_dir}\\logs\\{self.date_path}\\"):
             # Create the folder
-            os.makedirs(f"{root_dir}\\logs\\{self.date_path}\\")
+            os.makedirs(os.path.normpath(f"{root_dir}\\logs\\{self.date_path}\\"))
         
         # Specify the file name
         
         
         filename = f"{root_dir}\\logs\\{self.date_path}\\results_" + self.dataset_name + ".csv"
-
+        filename = os.path.normpath(filename)
         # Write the data to a CSV file
         with open(filename, 'w', newline='') as csvfile:
             # Create a CSV writer object
