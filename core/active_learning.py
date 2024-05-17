@@ -11,8 +11,12 @@ class ActiveLearning:
         self.dataset_name = dataset_name
         # Load the configuration
         config = ConfigParser()
-        current_file_path = os.path.abspath(__file__).replace("core\\active_learning.py", "params.ini") 
-        config.read(f'{current_file_path}')
+        current_file_path = os.path.abspath(__file__)
+        params_path = os.path.join(os.path.dirname(current_file_path), '..', 'params.ini')
+        params_path = os.path.normpath(params_path)
+        if not os.path.exists(params_path):
+            raise FileNotFoundError(f"The configuration file {params_path} does not exist.")
+        config.read(params_path)
         self.database_config = config[self.dataset_name.upper()]
         self.default_config = config['DEFAULT']
         # Initialize the core components
