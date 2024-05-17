@@ -58,7 +58,9 @@ class Visualization:
             plt.show()
         
         
-        root_dir = os.path.abspath(__file__).replace("core\\visualization.py", "") 
+        current_file_path = os.path.abspath(__file__)
+        root_dir = os.path.join(os.path.dirname(current_file_path), '..')
+        root_dir = os.path.normpath(root_dir)
         
         # Check if the folder exists
         if not os.path.exists(f"{root_dir}\\logs\\{self.date_path}\\"):
@@ -139,7 +141,9 @@ class Visualization:
                 fig.show()
 
             # Save the plot to an HTML file
-            root_dir = os.path.abspath(__file__).replace("core\\visualization.py", "") 
+            current_file_path = os.path.abspath(__file__)
+            root_dir = os.path.join(os.path.dirname(current_file_path), '..')
+            root_dir = os.path.normpath(root_dir)
         
             # Check if the folder exists    
             if not os.path.exists(f"{root_dir}\\logs\\{self.date_path}\\"):
@@ -184,8 +188,9 @@ class Visualization:
         if self.should_show_the_plot:
             fig.show()
         # Save the plot to an HTML file
-        root_dir = os.path.abspath(__file__).replace("core\\visualization.py", "") 
-    
+        current_file_path = os.path.abspath(__file__)
+        root_dir = os.path.join(os.path.dirname(current_file_path), '..')
+        root_dir = os.path.normpath(root_dir)
         # Check if the folder exists    
         if not os.path.exists(f"{root_dir}\\logs\\{self.date_path}\\"):
             # Create the folder
