@@ -1,5 +1,6 @@
 numpy
 pandas
+torcheval
 requests
 scikit-learn
 torch
