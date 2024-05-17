@@ -151,7 +151,7 @@ class Visualization:
                 # Create the folder
                 os.makedirs(os.path.normpath(f"{root_dir}\\logs\\{self.date_path}\\"))
             file_name = f'{root_dir}\\logs\\{self.date_path}\\3D_plot_{output_variable}_vs_{y_var}_plot.html'
-            filename = os.path.normpath(filename)
+            file_name = os.path.normpath(file_name)
             pio.write_html(fig, file_name)
     
     def plot_2d_scatter(self, df: pd.DataFrame, x_column: str, output_column: str, highlight: bool = False):
@@ -199,7 +199,7 @@ class Visualization:
             os.makedirs(os.path.normpath(f"{root_dir}\\logs\\{self.date_path}\\"))
         # Save the plot to an HTML file
         file_name = f'{root_dir}\\logs\\{self.date_path}\\{output_column}_vs_{x_column}_plot.html'
-        filename = os.path.normpath(filename)
+        file_name = os.path.normpath(file_name)
         pio.write_html(fig, file_name)
     
     
