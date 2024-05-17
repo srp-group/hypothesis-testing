@@ -39,9 +39,13 @@ class Pool():
 
 
         # setting the labeled indecies
-        initial_lb_size = float(self.dataset_config['labeled_share']) * len(self.idx_train) # initial labeled size
+        initial_lb_size = int(self.dataset_config['labeled_share']) # initial labeled size is always number, not percentage
         self.set_seed()
         self.idx_label = np.random.choice(self.idx_train, size=math.floor(initial_lb_size), replace=False) # original labeled indecies
+        if(float(self.dataset_config['budget'])<1):
+            self.max_budget = math.floor(float(self.dataset_config['budget']) * len(self.idx_train)) - initial_lb_size # if maximum budget is decimal, it is percentage
+        else:
+            self.max_budget = int(self.dataset_config['budget']) # if maximum budget is fixed number
 
         self.get_unlabeled_indecies()
 
@@ -50,6 +54,7 @@ class Pool():
         print(f"Validation: {len(self.idx_val)}")
         print(f"Test: {len(self.idx_test)}")
         print(f"Initial labeled data: {len(self.idx_label)}")
+        print(f"Budget: {self.max_budget}")
 
         
 

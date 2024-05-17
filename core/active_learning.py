@@ -10,14 +10,16 @@ class ActiveLearning:
         self.acquisition_function = acquisitions.Random(self.pool)
         self.clf = core.Classifier(pool=self.pool)
         self.visualizer = core.Visualization()
+        self.dataset_name = dataset_name
 
     def run(self) -> None:
 
         test_loss_list = []
         best_dropout_rate_list = []
         best_l2_reg_list = []
+        test_accuracy_list = []
 
-        for i in range(int(self.pool.dataset_config['budget'])):
+        for i in range(int(self.pool.max_budget)):
             print(f"============ iteration: {i+1} ============")
             print(f"current number of labeled data: {len(self.pool.idx_label)}")
             
@@ -27,6 +29,7 @@ class ActiveLearning:
             test_loss_list.append(test_loss)
             best_dropout_rate_list.append(best_dropout_rate)  
             best_l2_reg_list.append(best_l2_reg)
+            test_accuracy_list.append(test_metrics)
 
             self.pool.add_labeled_data(self.acquisition_function.query())
 
@@ -36,4 +39,4 @@ class ActiveLearning:
         print(f"best dropout rate: {best_dropout_rate_list}")
         print(f"best l2 reg: {best_l2_reg_list}")
         
-        self.visualizer.plot_primary_results(test_loss_list, best_dropout_rate_list, best_l2_reg_list)
+        self.visualizer.plot_primary_results(test_loss_list, best_dropout_rate_list, best_l2_reg_list,test_accuracy_list, dataset_name=self.dataset_name) 

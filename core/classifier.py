@@ -13,7 +13,8 @@ optuna.logging.set_verbosity(optuna.logging.ERROR)
 class Classifier():
     def __init__(self, pool: core.Pool) -> None:
         self.pool = pool
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cpu") # my GPU is slower than CPU LOL
         self.epochs = int(self.pool.dataset_config['epochs'])
 
     def eval(self, loader: DataLoader, model: MLP) -> tuple:
@@ -63,7 +64,7 @@ class Classifier():
         return val_loss
 
     def tune(self) -> None:
-        study = optuna.create_study(direction="minimize")
+        study = optuna.create_study(direction="minimize",sampler=optuna.samplers.TPESampler(),pruner=optuna.pruners.HyperbandPruner())
         study.optimize(self.objective, n_trials=int(self.pool.dataset_config['n_trials']))
         best_dropout_rate = study.best_params['dropout_rate']
         best_l2_reg = study.best_params['l2_reg']
