@@ -1,4 +1,3 @@
-from configparser import ConfigParser
 import numpy as np
 from torch.utils.data import DataLoader, Subset, ConcatDataset
 from datasets import DnaDataset, SpliceDataset, ProteinDataset
@@ -6,24 +5,20 @@ import torch
 from sklearn.model_selection import train_test_split
 import math
 from typing import Optional
-
-
-config = ConfigParser()
-config.read('params.ini')
-
+from configparser import SectionProxy
 class Pool():
-    def __init__(self, dataset_name:str, random_seed: int) -> None:
+    def __init__(self, dataset_name:str, random_seed: int, database_config: SectionProxy, default_config: SectionProxy) -> None:
         self.dataset_name = dataset_name
-        self.dataset_config = config[dataset_name.upper()]
-        self.default_config = config['DEFAULT']
+        self.dataset_config = database_config
+        self.default_config = default_config
         self.random_seed = random_seed
         # setting the dataset
         if dataset_name.lower() == 'dna':
-            self.dataset = DnaDataset()
+            self.dataset = DnaDataset(self.dataset_config)
         elif dataset_name.lower() == 'splice':
-            self.dataset = SpliceDataset()
+            self.dataset = SpliceDataset(self.dataset_config)
         elif dataset_name.lower() == 'protein':
-            self.dataset = ProteinDataset()
+            self.dataset = ProteinDataset(self.dataset_config)
         # setting the indecies
         self.set_seed()
         self.idx_abs = np.arange(len(self.dataset)) # absolute indecies

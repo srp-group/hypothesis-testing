@@ -2,19 +2,31 @@ from datasets import DnaDataset
 from torch.utils.data import DataLoader
 import core
 import acquisitions
-import models
+import os
+from configparser import ConfigParser
+import datetime
 
 class ActiveLearning:
     def __init__(self, dataset_name: str, random_seed: int) -> None:
-        self.pool = core.Pool(dataset_name=dataset_name, random_seed=random_seed)
+        self.dataset_name = dataset_name
+        # Load the configuration
+        config = ConfigParser()
+        current_file_path = os.path.abspath(__file__).replace("core\\active_learning.py", "params.ini") 
+        config.read(f'{current_file_path}')
+        self.database_config = config[self.dataset_name.upper()]
+        self.default_config = config['DEFAULT']
+        # Initialize the core components
+        self.pool = core.Pool(dataset_name=dataset_name, random_seed=random_seed,
+                database_config=self.database_config, default_config=self.default_config)
         self.acquisition_function = acquisitions.Random(self.pool)
         self.clf = core.Classifier(pool=self.pool)
-        self.visualizer = core.Visualization()
-        self.dataset_name = dataset_name
-        self.data_logger = core.Logger()
+        # initialize the visualization and logging components
+        current_time = datetime.datetime.now()
+        date_path = current_time.strftime("%Y-%m-%d_%H-%M-%S") 
+        self.visualizer = core.Visualization(dataset_name=self.dataset_name, date_path=date_path, should_show_the_plot=bool(int(self.default_config['should_show_the_plot'])))
+        self.data_logger = core.Logger(dataset_name=self.dataset_name, date_path=date_path)
 
     def run(self) -> None:
-
         test_loss_list = []
         best_dropout_rate_list = []
         best_l2_reg_list = []
@@ -30,7 +42,7 @@ class ActiveLearning:
             test_loss_list.append(test_loss)
             best_dropout_rate_list.append(best_dropout_rate)  
             best_l2_reg_list.append(best_l2_reg)
-            test_accuracy_list.append(test_metrics)
+            test_accuracy_list.append(test_metrics.item())
 
             self.pool.add_labeled_data(self.acquisition_function.query())
 
@@ -40,5 +52,7 @@ class ActiveLearning:
         print(f"best dropout rate: {best_dropout_rate_list}")
         print(f"best l2 reg: {best_l2_reg_list}")
         
-        self.visualizer.plot_primary_results(test_loss_list, best_dropout_rate_list, best_l2_reg_list,test_accuracy_list, self.dataset_name, bool(int(self.pool.default_config['should_show_the_plot']))) 
-        self.data_logger.log_primary_results(test_loss_list, best_dropout_rate_list, best_l2_reg_list, test_accuracy_list, dataset_name=self.dataset_name)
+        
+        file_path = self.data_logger.log_primary_results(test_loss_list, best_dropout_rate_list, best_l2_reg_list, test_accuracy_list)
+        self.visualizer.plot_results(file_path)
+        self.visualizer.plot_primary_results(test_loss_list, best_dropout_rate_list, best_l2_reg_list, test_accuracy_list)

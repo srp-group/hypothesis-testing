@@ -1,12 +1,14 @@
 import matplotlib.pyplot as plt
-import datetime
-
+import os
 
 class Visualization:
-    def __init__(self) -> None:
-        pass
+    def __init__(self, date_path: str, should_show_the_plot: bool, dataset_name: str) -> None:
+        self.date_path = date_path
+        self.should_show_the_plot = should_show_the_plot
+        self.dataset_name = dataset_name
     
-    def plot_primary_results(self, test_loss_list: list, best_dropout_rate_list: list, best_l2_reg_list:list, test_accuracy_list:list, dataset_name: str, should_show_the_plot: bool) -> None:
+    
+    def plot_primary_results(self, test_loss_list: list, best_dropout_rate_list: list, best_l2_reg_list:list, test_accuracy_list:list) -> None:
         
         iterations = range(len(test_loss_list))
 
@@ -46,13 +48,22 @@ class Visualization:
 
         plt.tight_layout()
         
-        if should_show_the_plot:
+        if self.should_show_the_plot:
             plt.show()
         
-        current_time = datetime.datetime.now()
-
+        
+        root_dir = os.path.abspath(__file__).replace("core\\visualization.py", "") 
+        
+        # Check if the folder exists
+        if not os.path.exists(f"{root_dir}\\logs\\{self.date_path}\\"):
+            # Create the folder
+            os.makedirs(f"{root_dir}\\logs\\{self.date_path}\\")
         # Specify the file name
-        filename = "logs/results_" + dataset_name + "_" + current_time.strftime("%Y-%m-%d_%H-%M-%S") + ".png"
+        filename = f"{root_dir}\\logs\\{self.date_path}\\results_" + self.dataset_name + ".png"
         
         # Save the plot as an image
         plt.savefig(filename)
+        
+        
+    def plot_results(self, file_path) -> None:
+        pass

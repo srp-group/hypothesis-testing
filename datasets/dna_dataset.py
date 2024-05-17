@@ -1,16 +1,10 @@
 from torch.utils.data import Dataset
-from configparser import ConfigParser
 import numpy as np
-
-# Read in the configurations from the params.ini file
-config = ConfigParser()
-config.read('params.ini')
-dna_config = config['DNA']
-
+from configparser import SectionProxy
 class DnaDataset(Dataset):
-    def __init__(self) -> None:
+    def __init__(self, dataset_config: SectionProxy) -> None:
         super().__init__()
-        with np.load(dna_config['data'], allow_pickle=True) as file:
+        with np.load(dataset_config['data'], allow_pickle=True) as file:
             self.x = file["x"].astype(np.float32)
             self.y = file["y"].astype(np.float32)
 
