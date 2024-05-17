@@ -1,32 +1,14 @@
 import matplotlib.pyplot as plt
-import csv
 import datetime
-import main
+
 
 class Visualization:
     def __init__(self) -> None:
         pass
     
-    def plot_primary_results(self, test_loss_list: list, best_dropout_rate_list: list, best_l2_reg_list:list, test_accuracy_list:list, dataset_name:str = '') -> None:
+    def plot_primary_results(self, test_loss_list: list, best_dropout_rate_list: list, best_l2_reg_list:list, test_accuracy_list:list, dataset_name: str, should_show_the_plot: bool) -> None:
         
         iterations = range(len(test_loss_list))
-        data = list(zip(iterations,best_l2_reg_list,best_dropout_rate_list,test_loss_list,test_accuracy_list))
-
-        current_time = datetime.datetime.now()
-
-        # Specify the file name
-        filename = "results_" + dataset_name + "_" + current_time.strftime("%Y-%m-%d_%H-%M-%S") + ".csv"
-
-        # Write the data to a CSV file
-        with open(filename, 'w', newline='') as csvfile:
-            # Create a CSV writer object
-            csvwriter = csv.writer(csvfile)
-            
-            # Write the header
-            csvwriter.writerow(['iterations', 'L2_value', 'drop_value', 'loss', 'accuracy'])
-            
-            # Write the data
-            csvwriter.writerows(data)
 
         plt.figure(figsize=(5, 20))  # Adjusted figure size to better fit 4 plots
 
@@ -63,4 +45,14 @@ class Visualization:
         plt.legend()
 
         plt.tight_layout()
-        plt.show()
+        
+        if should_show_the_plot:
+            plt.show()
+        
+        current_time = datetime.datetime.now()
+
+        # Specify the file name
+        filename = "logs/results_" + dataset_name + "_" + current_time.strftime("%Y-%m-%d_%H-%M-%S") + ".png"
+        
+        # Save the plot as an image
+        plt.savefig(filename)

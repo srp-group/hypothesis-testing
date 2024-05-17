@@ -11,6 +11,7 @@ class ActiveLearning:
         self.clf = core.Classifier(pool=self.pool)
         self.visualizer = core.Visualization()
         self.dataset_name = dataset_name
+        self.data_logger = core.Logger()
 
     def run(self) -> None:
 
@@ -39,4 +40,5 @@ class ActiveLearning:
         print(f"best dropout rate: {best_dropout_rate_list}")
         print(f"best l2 reg: {best_l2_reg_list}")
         
-        self.visualizer.plot_primary_results(test_loss_list, best_dropout_rate_list, best_l2_reg_list,test_accuracy_list, dataset_name=self.dataset_name) 
+        self.visualizer.plot_primary_results(test_loss_list, best_dropout_rate_list, best_l2_reg_list,test_accuracy_list, self.dataset_name, bool(int(self.pool.default_config['should_show_the_plot']))) 
+        self.data_logger.log_primary_results(test_loss_list, best_dropout_rate_list, best_l2_reg_list, test_accuracy_list, dataset_name=self.dataset_name)
