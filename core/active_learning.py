@@ -5,7 +5,8 @@ import acquisitions
 import os
 from configparser import ConfigParser
 import datetime
-
+import time
+from datetime import timedelta
 class ActiveLearning:
     def __init__(self, dataset_name: str, random_seed: int) -> None:
         self.dataset_name = dataset_name
@@ -43,33 +44,46 @@ class ActiveLearning:
             os.makedirs(self.logging_dir)
 
     def run(self) -> None:
-        
-        test_loss_list = []
-        best_dropout_rate_list = []
-        best_l2_reg_list = []
-        test_accuracy_list = []
+        allgemein_start_time = time.time()
+        self.test_loss_list = []
+        self.best_dropout_rate_list = []
+        self.best_l2_reg_list = []
+        self.test_accuracy_list = []
 
         for i in range(int(self.pool.max_budget)):
+            start_time = time.time()
+
             print(f"============ iteration: {i+1} ============")
             print(f"current number of labeled data: {len(self.pool.idx_label)}")
-            
+
             best_dropout_rate, best_l2_reg, best_val_loss = self.clf.tune()
             test_loss, test_metrics = self.clf.test(best_l2_reg, best_dropout_rate)
             
-            test_loss_list.append(test_loss)
-            best_dropout_rate_list.append(best_dropout_rate)  
-            best_l2_reg_list.append(best_l2_reg)
-            test_accuracy_list.append(test_metrics.item())
+            self.test_loss_list.append(test_loss)
+            self.best_dropout_rate_list.append(best_dropout_rate)  
+            self.best_l2_reg_list.append(best_l2_reg)
+            self.test_accuracy_list.append(test_metrics.item())
 
             self.pool.add_labeled_data(self.acquisition_function.query())
+            
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            formatted_time = str(timedelta(seconds=int(elapsed_time)))
+            print(f"iteration time: {formatted_time}")
 
         print(f"============ Final Results ============")
         
-        print(f"test loss: {test_loss_list}")
-        print(f"best dropout rate: {best_dropout_rate_list}")
-        print(f"best l2 reg: {best_l2_reg_list}")
+        allgemein_end_time = time.time()
+        allgemein_elapsed_time = allgemein_end_time - allgemein_start_time
+        allgemein_formatted_time = str(timedelta(seconds=int(allgemein_elapsed_time)))
+        print(f"time spent: {allgemein_formatted_time}")
+
+        
+        print(f"test loss: {self.test_loss_list}")
+        print(f"best dropout rate: {self.best_dropout_rate_list}")
+        print(f"best l2 reg: {self.best_l2_reg_list}")
         
         
-        file_path = self.data_logger.log_primary_results(test_loss_list, best_dropout_rate_list, best_l2_reg_list, test_accuracy_list)
+        file_path = self.data_logger.log_primary_results(self.test_loss_list, self.best_dropout_rate_list, self.best_l2_reg_list, self.test_accuracy_list)
         self.visualizer.plot_results(file_path)
-        self.visualizer.plot_primary_results(test_loss_list, best_dropout_rate_list, best_l2_reg_list, test_accuracy_list)
+        self.visualizer.plot_primary_results(self.test_loss_list, self.best_dropout_rate_list, self.best_l2_reg_list, self.test_accuracy_list)
