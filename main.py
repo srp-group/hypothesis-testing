@@ -13,4 +13,12 @@ if __name__ == '__main__':
     parser.add_argument('--r', type=int, help='random seed')
     args = parser.parse_args()
     # start Active Learning! :)
-    ActiveLearning(dataset_name=args.d, random_seed=args.r).run()
+    try:
+        al = ActiveLearning(dataset_name=args.d, random_seed=args.r)
+        al.run()
+    except Exception as e:
+        file_path = al.data_logger.log_primary_results(al.test_loss_list, al.best_dropout_rate_list, al.best_l2_reg_list, al.test_accuracy_list)
+        al.visualizer.plot_results(file_path)
+        al.visualizer.plot_primary_results(al.test_loss_list, al.best_dropout_rate_list, al.best_l2_reg_list, al.test_accuracy_list)
+        print("An error occurred! but the results are saved!")
+        print(e)

@@ -8,10 +8,10 @@ import pandas as pd
 from scipy.interpolate import griddata
 
 class Visualization:
-    def __init__(self, date_path: str, should_show_the_plot: bool, dataset_name: str) -> None:
-        self.date_path = date_path
+    def __init__(self, should_show_the_plot: bool, dataset_name: str, logging_dir : str) -> None:
         self.should_show_the_plot = should_show_the_plot
         self.dataset_name = dataset_name
+        self.logging_dir = logging_dir              
     
     
     def plot_primary_results(self, test_loss_list: list, best_dropout_rate_list: list, best_l2_reg_list:list, test_accuracy_list:list) -> None:
@@ -57,18 +57,8 @@ class Visualization:
         if self.should_show_the_plot:
             plt.show()
         
-        
-        # Save the plot to an HTML file
-        current_file_path = os.path.abspath(__file__)
-        root_dir = os.path.join(os.path.dirname(current_file_path), '..')
-        root_dir = os.path.normpath(root_dir)
-        
-        # Check if the folder exists
-        if not os.path.exists(f"{root_dir}\\logs\\{self.date_path}\\"):
-            # Create the folder
-            os.makedirs(os.path.normpath(f"{root_dir}\\logs\\{self.date_path}\\"))
         # Specify the file name
-        filename = f"{root_dir}\\logs\\{self.date_path}\\results_" + self.dataset_name + ".png"
+        filename = os.path.join(self.logging_dir, f'results_{self.dataset_name}.png')
         filename = os.path.normpath(filename)
         # Save the plot as an image
         plt.savefig(filename)
@@ -141,16 +131,7 @@ class Visualization:
             if self.should_show_the_plot:
                 fig.show()
 
-            # Save the plot to an HTML file
-            current_file_path = os.path.abspath(__file__)
-            root_dir = os.path.join(os.path.dirname(current_file_path), '..')
-            root_dir = os.path.normpath(root_dir)
-        
-            # Check if the folder exists    
-            if not os.path.exists(f"{root_dir}\\logs\\{self.date_path}\\"):
-                # Create the folder
-                os.makedirs(os.path.normpath(f"{root_dir}\\logs\\{self.date_path}\\"))
-            file_name = f'{root_dir}\\logs\\{self.date_path}\\3D_plot_{output_variable}_vs_{y_var}_plot.html'
+            file_name = os.path.join(self.logging_dir, f'3D_plot_{output_variable}_vs_{y_var}_plot.html')
             file_name = os.path.normpath(file_name)
             pio.write_html(fig, file_name)
     
@@ -189,16 +170,9 @@ class Visualization:
         # Show the plot
         if self.should_show_the_plot:
             fig.show()
+
         # Save the plot to an HTML file
-        current_file_path = os.path.abspath(__file__)
-        root_dir = os.path.join(os.path.dirname(current_file_path), '..')
-        root_dir = os.path.normpath(root_dir)
-        # Check if the folder exists    
-        if not os.path.exists(f"{root_dir}\\logs\\{self.date_path}\\"):
-            # Create the folder
-            os.makedirs(os.path.normpath(f"{root_dir}\\logs\\{self.date_path}\\"))
-        # Save the plot to an HTML file
-        file_name = f'{root_dir}\\logs\\{self.date_path}\\{output_column}_vs_{x_column}_plot.html'
+        file_name = os.path.join(self.logging_dir, f'{output_column}_vs_{x_column}_plot.html')
         file_name = os.path.normpath(file_name)
         pio.write_html(fig, file_name)
     
