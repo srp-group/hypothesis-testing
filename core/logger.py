@@ -2,29 +2,16 @@ import csv
 import os
 
 class Logger:
-    def __init__(self, dataset_name:str, date_path: str) -> None:
+    def __init__(self, dataset_name:str, logging_dir : str) -> None:
         self.dataset_name = dataset_name
-        self.date_path = date_path
+        self.logging_dir = logging_dir                
     
     def log_primary_results(self, test_loss_list: list, best_dropout_rate_list: list, best_l2_reg_list:list, test_accuracy_list:list) -> str:
         iterations = range(len(test_loss_list))
 
         data = list(zip(iterations,best_l2_reg_list,best_dropout_rate_list,test_loss_list,test_accuracy_list))
-
         
-        
-        current_file_path = os.path.abspath(__file__)
-        root_dir = os.path.join(os.path.dirname(current_file_path), '..')
-        root_dir = os.path.normpath(root_dir)
-        # Check if the folder exists
-        if not os.path.exists(f"{root_dir}\\logs\\{self.date_path}\\"):
-            # Create the folder
-            os.makedirs(os.path.normpath(f"{root_dir}\\logs\\{self.date_path}\\"))
-        
-        # Specify the file name
-        
-        
-        filename = f"{root_dir}\\logs\\{self.date_path}\\results_" + self.dataset_name + ".csv"
+        filename = os.path.join(self.logging_dir, f'results_{self.dataset_name}.csv')
         filename = os.path.normpath(filename)
         # Write the data to a CSV file
         with open(filename, 'w', newline='') as csvfile:

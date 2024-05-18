@@ -10,27 +10,40 @@ class ActiveLearning:
     def __init__(self, dataset_name: str, random_seed: int) -> None:
         self.dataset_name = dataset_name
         # Load the configuration
-        config = ConfigParser()
-        current_file_path = os.path.abspath(__file__)
-        params_path = os.path.join(os.path.dirname(current_file_path), '..', 'params.ini')
-        params_path = os.path.normpath(params_path)
-        if not os.path.exists(params_path):
-            raise FileNotFoundError(f"The configuration file {params_path} does not exist.")
-        config.read(params_path)
-        self.database_config = config[self.dataset_name.upper()]
-        self.default_config = config['DEFAULT']
+        self.get_config()
         # Initialize the core components
         self.pool = core.Pool(dataset_name=dataset_name, random_seed=random_seed,
                 database_config=self.database_config, default_config=self.default_config)
         self.acquisition_function = acquisitions.Random(self.pool)
         self.clf = core.Classifier(pool=self.pool)
         # initialize the visualization and logging components
+        self.set_logging_dir()
+        self.visualizer = core.Visualization(dataset_name=self.dataset_name, should_show_the_plot=bool(int(self.default_config['should_show_the_plot'])), logging_dir=self.logging_dir)
+        self.data_logger = core.Logger(dataset_name=self.dataset_name, logging_dir=self.logging_dir)
+
+
+    def get_config(self) -> None:
+        root_dir = os.getcwd()
+        params_path = os.path.join(root_dir, 'params.ini')
+        params_path = os.path.normpath(params_path)
+        config = ConfigParser()
+        config.read(params_path)
+        self.database_config = config[self.dataset_name.upper()]
+        self.default_config = config['DEFAULT']
+    
+    def set_logging_dir(self) -> None:
         current_time = datetime.datetime.now()
         date_path = current_time.strftime("%Y-%m-%d_%H-%M-%S") 
-        self.visualizer = core.Visualization(dataset_name=self.dataset_name, date_path=date_path, should_show_the_plot=bool(int(self.default_config['should_show_the_plot'])))
-        self.data_logger = core.Logger(dataset_name=self.dataset_name, date_path=date_path)
+        root_dir = os.getcwd()
+        self.logging_dir = os.path.join(root_dir, 'logs', date_path)
+        self.logging_dir = os.path.normpath(self.logging_dir)
+        # Check if the folder exists    
+        if not os.path.exists(self.logging_dir):
+            # Create the folder
+            os.makedirs(self.logging_dir)
 
     def run(self) -> None:
+        
         test_loss_list = []
         best_dropout_rate_list = []
         best_l2_reg_list = []
