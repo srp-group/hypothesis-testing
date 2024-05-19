@@ -1,3 +1,4 @@
+import acquisitions.corset
 from datasets import DnaDataset
 from torch.utils.data import DataLoader
 import core
@@ -15,7 +16,8 @@ class ActiveLearning:
         # Initialize the core components
         self.pool = core.Pool(dataset_name=dataset_name, random_seed=random_seed,
                 database_config=self.database_config, default_config=self.default_config)
-        self.acquisition_function = acquisitions.Random(self.pool)
+        #self.acquisition_function = acquisitions.Random(self.pool)
+        self.acquisition_function = acquisitions.corset(self.pool)
         self.clf = core.Classifier(pool=self.pool)
         # initialize the visualization and logging components
         self.set_logging_dir()
