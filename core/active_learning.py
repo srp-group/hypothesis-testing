@@ -24,8 +24,8 @@ class ActiveLearning:
 
 
     def get_config(self) -> None:
-        root_dir = os.getcwd()
-        params_path = os.path.join(root_dir, 'params.ini')
+        current_file_path = os.path.abspath(__file__)
+        params_path = os.path.join(os.path.dirname(current_file_path), "..", 'params.ini')
         params_path = os.path.normpath(params_path)
         config = ConfigParser()
         config.read(params_path)
@@ -35,8 +35,8 @@ class ActiveLearning:
     def set_logging_dir(self) -> None:
         current_time = datetime.datetime.now()
         date_path = current_time.strftime("%Y-%m-%d_%H-%M-%S") 
-        root_dir = os.getcwd()
-        self.logging_dir = os.path.join(root_dir, 'logs', date_path)
+        current_file_path = os.path.abspath(__file__)
+        self.logging_dir = os.path.join(os.path.dirname(current_file_path), "..", 'logs', date_path)
         self.logging_dir = os.path.normpath(self.logging_dir)
         # Check if the folder exists    
         if not os.path.exists(self.logging_dir):
@@ -70,6 +70,9 @@ class ActiveLearning:
             elapsed_time = end_time - start_time
             formatted_time = str(timedelta(seconds=int(elapsed_time)))
             print(f"iteration time: {formatted_time}")
+            print(f"iteration test_loss: {test_loss}")
+            print(f"iteration test_accuracy: {test_metrics.item()}")
+            self.visualizer.plot_primary_results(self.test_loss_list, self.best_dropout_rate_list, self.best_l2_reg_list, self.test_accuracy_list)
 
         print(f"============ Final Results ============")
         
@@ -86,4 +89,3 @@ class ActiveLearning:
         
         file_path = self.data_logger.log_primary_results(self.test_loss_list, self.best_dropout_rate_list, self.best_l2_reg_list, self.test_accuracy_list)
         self.visualizer.plot_results(file_path)
-        self.visualizer.plot_primary_results(self.test_loss_list, self.best_dropout_rate_list, self.best_l2_reg_list, self.test_accuracy_list)

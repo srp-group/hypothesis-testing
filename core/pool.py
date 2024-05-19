@@ -1,6 +1,6 @@
 import numpy as np
 from torch.utils.data import DataLoader, Subset, ConcatDataset
-from datasets import DnaDataset, SpliceDataset, ProteinDataset
+from datasets import DnaDataset, SpliceDataset, ProteinDataset, TwoMoonsDataset
 import torch
 from sklearn.model_selection import train_test_split
 import math
@@ -19,6 +19,8 @@ class Pool():
             self.dataset = SpliceDataset(self.dataset_config)
         elif dataset_name.lower() == 'protein':
             self.dataset = ProteinDataset(self.dataset_config)
+        elif dataset_name.lower() == 'twomoons':
+            self.dataset = TwoMoonsDataset(self.dataset_config)
         # setting the indecies
         self.set_seed()
         self.idx_abs = np.arange(len(self.dataset)) # absolute indecies
