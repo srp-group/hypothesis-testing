@@ -97,9 +97,12 @@ class ActiveLearning:
     def log_params(self) -> None:
         results_dict = dict(self.database_config)
         results_dict['dataset_name'] = self.dataset_name
-        results_dict['time_spent'] = self.allgemein_formatted_time
+        if self.allgemein_formatted_time:
+            results_dict['time_spent'] = self.allgemein_formatted_time
         results_dict['random_seed'] = self.pool.random_seed
-        results_dict['last_dropout_rate'] = self.best_dropout_rate_list[-1]
-        results_dict['last_l2_reg'] = self.best_l2_reg_list[-1]
+        if self.best_dropout_rate_list:
+            results_dict['last_dropout_rate'] = self.best_dropout_rate_list[-1]
+        if self.best_l2_reg_list:
+            results_dict['last_l2_reg'] = self.best_l2_reg_list[-1]
         results_dict['random_batch_size'] = self.default_config['random_batch_size']
         self.data_logger.log_params(results_dict)
