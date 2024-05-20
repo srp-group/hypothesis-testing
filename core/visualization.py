@@ -8,10 +8,11 @@ import pandas as pd
 from scipy.interpolate import griddata
 
 class Visualization:
-    def __init__(self, should_show_the_plot: bool, dataset_name: str, logging_dir : str) -> None:
+    def __init__(self, should_show_the_plot: bool, dataset_name: str, logging_dir : str, model_name : str) -> None:
         self.should_show_the_plot = should_show_the_plot
         self.dataset_name = dataset_name
-        self.logging_dir = logging_dir              
+        self.logging_dir = logging_dir
+        self.model_name = model_name              
     
     
     def plot_primary_results(self, test_loss_list: list, best_dropout_rate_list: list, best_l2_reg_list:list, test_accuracy_list:list) -> None:
@@ -195,7 +196,11 @@ class Visualization:
 
         df['AUBC_totals'] = df['AUBC'].cumsum()
         
-        self.plot_3d_scatter_surface(df, 'iterations', ['L2_value', 'drop_value'], 'loss', surface=False, highlight=True)
+        if self.model_name == 'MLP':
+            self.plot_3d_scatter_surface(df, 'iterations', ['L2_value', 'drop_value'], 'loss', surface=True, highlight=True)
+        elif self.model_name == 'MLR':
+            self.plot_3d_scatter_surface(df, 'iterations', ['L2_value'], 'loss', surface=False, highlight=True)
+
         self.plot_2d_scatter(df, 'iterations', 'loss', highlight=True)
         self.plot_2d_scatter(df, 'iterations', 'L2_value', highlight=True)
         self.plot_2d_scatter(df, 'iterations', 'drop_value', highlight=True)

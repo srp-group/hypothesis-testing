@@ -19,7 +19,7 @@ class ActiveLearning:
         self.clf = core.Classifier(pool=self.pool)
         # initialize the visualization and logging components
         self.set_logging_dir()
-        self.visualizer = core.Visualization(dataset_name=self.dataset_name, should_show_the_plot=bool(int(self.default_config['should_show_the_plot'])), logging_dir=self.logging_dir)
+        self.visualizer = core.Visualization(dataset_name=self.dataset_name, should_show_the_plot=bool(int(self.default_config['should_show_the_plot'])), logging_dir=self.logging_dir, model_name=str(self.database_config['model_name']))
         self.data_logger = core.Logger(dataset_name=self.dataset_name, logging_dir=self.logging_dir)
 
 
