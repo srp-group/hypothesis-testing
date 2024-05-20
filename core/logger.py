@@ -1,5 +1,6 @@
 import csv
 import os
+import json
 
 class Logger:
     def __init__(self, dataset_name:str, logging_dir : str) -> None:
@@ -25,3 +26,11 @@ class Logger:
             csvwriter.writerows(data)
         
         return filename
+    
+    def log_params(self, results_dict: dict) -> None:
+        filename = os.path.join(self.logging_dir, f'run_info.json')
+        filename = os.path.normpath(filename)
+        # Write the data to a JSON file
+        with open(filename, 'w') as jsonfile:
+            # Write the dictionary as JSON
+            json.dump(results_dict, jsonfile)

@@ -64,7 +64,8 @@ class ActiveLearning:
             self.best_l2_reg_list.append(best_l2_reg)
             self.test_accuracy_list.append(test_metrics.item())
 
-            self.pool.add_labeled_data(self.acquisition_function.query())
+            for j in range(int(self.default_config['random_batch_size'])):
+                self.pool.add_labeled_data(self.acquisition_function.query())
             
             end_time = time.time()
             elapsed_time = end_time - start_time
@@ -80,8 +81,8 @@ class ActiveLearning:
         
         allgemein_end_time = time.time()
         allgemein_elapsed_time = allgemein_end_time - allgemein_start_time
-        allgemein_formatted_time = str(timedelta(seconds=int(allgemein_elapsed_time)))
-        print(f"time spent: {allgemein_formatted_time}")
+        self.allgemein_formatted_time = str(timedelta(seconds=int(allgemein_elapsed_time)))
+        print(f"time spent: {self.allgemein_formatted_time}")
 
         
         print(f"test loss: {self.test_loss_list}")
@@ -91,3 +92,14 @@ class ActiveLearning:
         
         file_path = self.data_logger.log_primary_results(self.test_loss_list, self.best_dropout_rate_list, self.best_l2_reg_list, self.test_accuracy_list)
         self.visualizer.plot_results(file_path)
+        self.log_params()
+    
+    def log_params(self) -> None:
+        results_dict = dict(self.database_config)
+        results_dict['dataset_name'] = self.dataset_name
+        results_dict['time_spent'] = self.allgemein_formatted_time
+        results_dict['random_seed'] = self.pool.random_seed
+        results_dict['last_dropout_rate'] = self.best_dropout_rate_list[-1]
+        results_dict['last_l2_reg'] = self.best_l2_reg_list[-1]
+        results_dict['random_batch_size'] = self.default_config['random_batch_size']
+        self.data_logger.log_params(results_dict)
