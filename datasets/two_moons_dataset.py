@@ -9,11 +9,11 @@ class TwoMoonsDataset(Dataset):
         current_file_path = os.path.abspath(__file__)
         data_path = os.path.join(os.path.dirname(current_file_path), '..', dataset_config['data'])
         data_path = os.path.normpath(data_path)
-        df = pd.read_csv(data_path, header=0, index_col=0)
+        df = pd.read_excel(data_path)
         df_Y = df['Label']
-        df_X = df.drop(columns=['Label'])
-        self.x = df_X.to_numpy()
-        self.y = df_Y.to_numpy()
+        df_X = df.drop('Label', axis=1)
+        self.x = df_X.values
+        self.y = df_Y.values
 
     def __len__(self) -> int:
         return self.x.shape[0]

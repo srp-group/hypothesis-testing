@@ -72,6 +72,8 @@ class ActiveLearning:
             print(f"iteration time: {formatted_time}")
             print(f"iteration test_loss: {test_loss}")
             print(f"iteration test_accuracy: {test_metrics.item()}")
+            print(f"iteration best dropout rate: {best_dropout_rate}")
+            print(f"iteration best l2 reg: {best_l2_reg}")
             self.visualizer.plot_primary_results(self.test_loss_list, self.best_dropout_rate_list, self.best_l2_reg_list, self.test_accuracy_list)
 
         print(f"============ Final Results ============")
