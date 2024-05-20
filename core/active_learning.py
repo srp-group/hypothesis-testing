@@ -1,5 +1,5 @@
-import acquisitions.corset
 from datasets import DnaDataset
+#from acquisitions import Coreset
 from torch.utils.data import DataLoader
 import core
 import acquisitions
@@ -9,7 +9,7 @@ import datetime
 import time
 from datetime import timedelta
 class ActiveLearning:
-    def __init__(self, dataset_name: str, random_seed: int) -> None:
+    def __init__(self, dataset_name: str, random_seed: int,budget:int) -> None:
         self.dataset_name = dataset_name
         # Load the configuration
         self.get_config()
@@ -17,8 +17,9 @@ class ActiveLearning:
         self.pool = core.Pool(dataset_name=dataset_name, random_seed=random_seed,
                 database_config=self.database_config, default_config=self.default_config)
         #self.acquisition_function = acquisitions.Random(self.pool)
-        self.acquisition_function = acquisitions.corset(self.pool)
         self.clf = core.Classifier(pool=self.pool)
+        self.acquisition_function = acquisitions.Coreset(clf=self.clf,pool=self.pool,random_seed=self.pool.random_seed,budget=self.pool.max_budget)
+        
         # initialize the visualization and logging components
         self.set_logging_dir()
         self.visualizer = core.Visualization(dataset_name=self.dataset_name, should_show_the_plot=bool(int(self.default_config['should_show_the_plot'])), logging_dir=self.logging_dir)

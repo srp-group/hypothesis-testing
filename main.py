@@ -14,7 +14,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     # start Active Learning! :)
     try:
-        al = ActiveLearning(dataset_name=args.d, random_seed=args.r)
+        al = ActiveLearning(dataset_name=args.d, random_seed=args.r,budget=100)
         al.run()
     except Exception as e:
         file_path = al.data_logger.log_primary_results(al.test_loss_list, al.best_dropout_rate_list, al.best_l2_reg_list, al.test_accuracy_list)

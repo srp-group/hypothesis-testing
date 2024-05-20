@@ -1,4 +1,5 @@
 import numpy as np
+import core
 # The Acquisition function
 class Random():
     def __init__(self, pool: 'core.Pool') -> None:
