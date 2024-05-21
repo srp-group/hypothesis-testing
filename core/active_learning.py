@@ -53,7 +53,8 @@ class ActiveLearning:
         self.best_l2_reg_list = []
         self.test_accuracy_list = []
 
-        for i in range(int(self.pool.max_budget)):
+        al_iterations = int(self.pool.max_budget) // int(self.default_config['random_batch_size'])
+        for i in range(al_iterations):
             start_time = time.time()
 
             print(f"============ iteration: {i+1} ============")
