@@ -198,7 +198,7 @@ class Visualization:
         
         if self.model_name == 'MLP':
             self.plot_3d_scatter_surface(df, 'iterations', ['L2_value', 'drop_value'], 'loss', surface=True, highlight=True)
-        elif self.model_name == 'MLR':
+        elif self.model_name == 'MLR' or self.model_name == 'SVM':
             self.plot_3d_scatter_surface(df, 'iterations', ['L2_value'], 'loss', surface=False, highlight=True)
 
         self.plot_2d_scatter(df, 'iterations', 'loss', highlight=True)

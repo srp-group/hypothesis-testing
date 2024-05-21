@@ -1,6 +1,6 @@
 import torch
 from torch.utils.data import  DataLoader
-from models import MLP, MLR
+from models import MLP, MLR, SVM
 import optuna
 import core
 from typing import Optional
@@ -17,8 +17,27 @@ class Classifier():
         self.device = torch.device("cpu") # my GPU is slower than CPU LOL
         self.epochs = int(self.pool.dataset_config['epochs'])
         self.model_name = str(self.pool.dataset_config['model_name'])
+        self.l2_reg = None
+        self.dropout_rate = None
 
-    def eval(self, loader: DataLoader, model: MLP | MLR) -> tuple:
+    def init_model(self) -> MLP | MLR | SVM: # no repetition of code
+        if self.model_name == 'MLP':
+            model = MLP(int(self.pool.dataset_config['n_features']),
+                        int(self.pool.dataset_config['n_classes']),
+                        self.l2_reg,
+                        self.dropout_rate).to(self.device)
+        elif self.model_name == 'MLR':
+            model = MLR(int(self.pool.dataset_config['n_features']),
+                        int(self.pool.dataset_config['n_classes']),
+                        self.l2_reg).to(self.device)
+        elif self.model_name == 'SVM':
+            model = SVM(int(self.pool.dataset_config['n_features']),
+                        int(self.pool.dataset_config['n_classes']),
+                        self.l2_reg).to(self.device)
+        return model
+        
+
+    def eval(self, loader: DataLoader, model: MLP | MLR | SVM ) -> tuple:
         model.eval()
         total_loss = 0
         total_acc = 0
@@ -32,7 +51,7 @@ class Classifier():
                 total_acc += model.calculate_accuracy(predictions, targets)  
         return total_loss/len(loader), total_acc/len(loader)
     
-    def fit(self, train_loader: DataLoader, val_loader: DataLoader, model: MLP | MLR, trial: Optional[Trial] = None) -> tuple:
+    def fit(self, train_loader: DataLoader, val_loader: DataLoader, model: MLP | MLR | SVM, trial: Optional[Trial] = None) -> tuple:
         model.train()
         for epoch_num in range(self.epochs):
             for inputs, targets in train_loader:
@@ -53,18 +72,13 @@ class Classifier():
         return (train_loss, train_metrics),  (val_loss, val_metrics)
     
     def objective(self, trial: optuna.trial) -> float:
-        # CREATE MODEL
-        l2_reg = trial.suggest_float("l2_reg", 1e-6, 1e-1, log=True)
+        # CREATE MODEL      
+        self.l2_reg = trial.suggest_float("l2_reg", 1e-6, 1e-1, log=True)
         if self.model_name == 'MLP':
-            dropout_rate = trial.suggest_float("dropout_rate", 1e-3, 0.5)
-            model = MLP(int(self.pool.dataset_config['n_features']),
-                            int(self.pool.dataset_config['n_classes']),
-                            l2_reg,
-                            dropout_rate).to(self.device)
-        elif self.model_name == 'MLR':
-            model = MLR(int(self.pool.dataset_config['n_features']),
-                            int(self.pool.dataset_config['n_classes']),
-                            l2_reg).to(self.device)
+            self.dropout_rate = trial.suggest_float("dropout_rate", 1e-3, 0.5)
+        elif self.model_name == 'MLR' or self.model_name == 'SVM':
+            self.dropout_rate = 0
+        model = self.init_model()
         train_loader, val_loader, test_loader = self.pool.get_loaders()
         (train_loss, train_metrics),  (val_loss, val_metrics) = self.fit(train_loader, val_loader, model, trial)
         return val_loss
@@ -74,7 +88,7 @@ class Classifier():
         study.optimize(self.objective, n_trials=int(self.pool.dataset_config['n_trials']))
         if self.model_name == 'MLP':
             best_dropout_rate = study.best_params['dropout_rate']
-        elif self.model_name == 'MLR':
+        elif self.model_name == 'MLR' or self.model_name == 'SVM':
             best_dropout_rate = 0
         best_l2_reg = study.best_params['l2_reg']
         best_val_loss = study.best_value
@@ -82,19 +96,17 @@ class Classifier():
         return best_dropout_rate, best_l2_reg, best_val_loss
     
     def test(self, l2_reg: float, dropout_rate: float) -> tuple:
-        # CREATE MODEL
-        if self.model_name == 'MLP':
-            model = MLP(int(self.pool.dataset_config['n_features']),
-                            int(self.pool.dataset_config['n_classes']),
-                            l2_reg,
-                            dropout_rate).to(self.device)
-        elif self.model_name == 'MLR':
-            model = MLR(int(self.pool.dataset_config['n_features']),
-                            int(self.pool.dataset_config['n_classes']),
-                            l2_reg).to(self.device)
+        model = self.init_model()
         model.eval()
         train_loader, test_loader = self.pool.get_test_loaders()
         (train_loss, train_metrics), (test_loss, test_metrics) = self.fit(
             train_loader, test_loader, model
         )
         return test_loss, test_metrics
+    
+    def probability(self, x):   
+        model = self.init_model()
+        model.train()
+        with torch.no_grad():
+            a = model(x.to(self.device))
+            return model(x.to(self.device))

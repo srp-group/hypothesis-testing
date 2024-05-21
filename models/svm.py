@@ -1,21 +1,20 @@
-# Source: https://github.com/yunjey/pytorch-tutorial/blob/master/tutorials/01-basics/logistic_regression/main.py
+# Source: https://github.com/nathanlem1/SVM_PyTorch/blob/master/SVM_PyTorch_train.py#L16
 import torch
 import torch.nn as nn
 from torcheval import metrics
 
-class MLR(nn.Module):
+class SVM(nn.Module):
     def __init__(self, n_features: int, n_classes: int, l2_reg: float) -> None:
         super().__init__()
         # Define a single linear layer
         self.linear = nn.Linear(n_features, n_classes)
-        self.criterion = nn.CrossEntropyLoss() # Cross-entropy loss which computes softmax internally; logistic regression
+        self.criterion = nn.MultiMarginLoss() # Multi-class classification hinge loss (margin-based loss); SVM
         self.optimizer = torch.optim.Adam(self.parameters(), weight_decay=l2_reg)
         self.metric = metrics.MulticlassAccuracy(num_classes=n_classes)
 
     def forward(self, x):
         # Apply the linear layer
         x = self.linear(x)
-        # Softmax is applied implicitly in nn.CrossEntropyLoss, so not needed here
         return x
 
     def calculate_accuracy(self, y_pred, y_true):

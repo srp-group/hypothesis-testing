@@ -15,8 +15,11 @@ class ActiveLearning:
         # Initialize the core components
         self.pool = core.Pool(dataset_name=dataset_name, random_seed=random_seed,
                 database_config=self.database_config, default_config=self.default_config)
-        self.acquisition_function = acquisitions.Random(self.pool)
         self.clf = core.Classifier(pool=self.pool)
+        if self.database_config['al_algo'] == 'random':
+            self.acquisition_function = acquisitions.Random(self.pool)
+        elif self.database_config['al_algo'] == 'entropy': # currently only works for MLP
+            self.acquisition_function = acquisitions.Entropy(self.pool, self.clf)
         # initialize the visualization and logging components
         self.set_logging_dir()
         self.visualizer = core.Visualization(dataset_name=self.dataset_name, should_show_the_plot=bool(int(self.default_config['should_show_the_plot'])), logging_dir=self.logging_dir, model_name=str(self.database_config['model_name']))
