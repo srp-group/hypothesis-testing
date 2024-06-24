@@ -73,8 +73,9 @@ class Pool():
     
     def get_test_loaders(self) -> tuple:
         '''Returns the train and test loaders respectively. train is consisted of the union train and validation sets.'''
-        train_loader = DataLoader(Subset(self.dataset, np.concatenate((
-            self.idx_label, self.idx_val))), batch_size=int(self.dataset_config['batch_size']), shuffle=True)
+        # train_loader = DataLoader(Subset(self.dataset, np.concatenate((
+        #     self.idx_label, self.idx_val))), batch_size=int(self.dataset_config['batch_size']), shuffle=True)
+        train_loader = DataLoader(Subset(self.dataset, self.idx_label), batch_size=int(self.dataset_config['batch_size']), shuffle=True)
         test_loader = DataLoader(Subset(self.dataset, self.idx_test), batch_size=int(self.dataset_config['batch_size']), shuffle=False)
         return train_loader, test_loader
     

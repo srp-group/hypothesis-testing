@@ -8,3 +8,4 @@ matplotlib
 scipy
 optuna
 openpyxl
+plotly
