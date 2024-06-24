@@ -1,3 +1,11 @@
 numpy
 pandas
-configparser
+torcheval
+requests
+scikit-learn
+torch
+matplotlib
+scipy
+optuna
+openpyxl
+plotly
