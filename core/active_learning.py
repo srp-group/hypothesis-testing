@@ -8,12 +8,13 @@ import datetime
 import time
 from datetime import timedelta
 class ActiveLearning:
-    def __init__(self, dataset_name: str, random_seed: int) -> None:
-        self.dataset_name = dataset_name
+    def __init__(self) -> None:
         # Load the configuration
         self.get_config()
+        self.dataset_name = self.default_config['dataset_name']
+        self.random_seed = int(self.default_config['random_seed'])
         # Initialize the core components
-        self.pool = core.Pool(dataset_name=dataset_name, random_seed=random_seed,
+        self.pool = core.Pool(dataset_name=self.dataset_name, random_seed=self.random_seed,
                 database_config=self.database_config, default_config=self.default_config)
         self.clf = core.Classifier(pool=self.pool)
         if self.database_config['al_algo'] == 'random':
