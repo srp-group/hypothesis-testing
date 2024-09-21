@@ -10,9 +10,7 @@ from datetime import timedelta
 class ActiveLearning:
     def __init__(self) -> None:
         # Load the configuration
-        self.get_config()
-        self.dataset_name = self.default_config['dataset_name']
-        self.random_seed = int(self.default_config['random_seed'])
+        self.get_config()       
         # Initialize the core components
         self.pool = core.Pool(dataset_name=self.dataset_name, random_seed=self.random_seed,
                 database_config=self.database_config, default_config=self.default_config)
@@ -33,9 +31,11 @@ class ActiveLearning:
         params_path = os.path.normpath(params_path)
         config = ConfigParser()
         config.read(params_path)
-        self.database_config = config[self.dataset_name.upper()]
         self.default_config = config['DEFAULT']
-    
+        self.dataset_name = self.default_config['dataset_name']
+        self.random_seed = int(self.default_config['random_seed'])
+        self.database_config = config[self.dataset_name.upper()]
+
     def set_logging_dir(self) -> None:
         current_time = datetime.datetime.now()
         date_path = current_time.strftime("%Y-%m-%d_%H-%M-%S") 
@@ -59,7 +59,7 @@ class ActiveLearning:
             start_time = time.time()
 
             print(f"============ iteration: {i+1} ============")
-            print(f"current number of labeled data: {len(self.pool.idx_label)}")
+            print(f"current number of newly labeled data: {len(self.pool.idx_newly_labeled)}")
 
             best_dropout_rate, best_l2_reg, best_val_loss = self.clf.tune()
             test_loss, test_metrics = self.clf.test(best_l2_reg, best_dropout_rate)

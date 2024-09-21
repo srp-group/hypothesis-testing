@@ -20,6 +20,7 @@ class Classifier():
         self.model_name = str(self.pool.dataset_config['model_name'])
         self.l2_reg = None
         self.dropout_rate = None
+        self.model_state = None
 
     def init_model(self) -> MLP | MLR | SVM: # no repetition of code
         if self.model_name == 'MLP':
@@ -36,9 +37,20 @@ class Classifier():
                         int(self.pool.dataset_config['n_classes']),
                         self.l2_reg).to(self.device)
         return model
-        
+
+    def get_model(self) -> MLP | MLR | SVM:
+        if not self.model_state: 
+            model = self.init_model()
+            self.model_state = model.state_dict()
+        model = self.init_model()
+        model.load_state_dict(self.model_state)
+        if self.model_name == 'MLP':
+            model.set_dropout_rate(self.dropout_rate)
+        model.set_l2_reg(self.l2_reg)
+        return model
 
     def eval(self, loader: DataLoader, model: MLP | MLR | SVM ) -> tuple:
+        '''Equivalent to the test loop. Used by both test and validation.'''
         model.eval()
         total_loss = 0
         total_acc = 0
@@ -49,29 +61,32 @@ class Classifier():
                 predictions = model(inputs)
                 batch_loss = model.criterion(predictions, torch.argmax(targets, dim=1))
                 total_loss += batch_loss.item()
-                total_acc += model.calculate_accuracy(predictions, targets)  
+                total_acc += model.calculate_accuracy(predictions, targets)
         return total_loss/len(loader), total_acc/len(loader)
     
-    def fit(self, train_loader: DataLoader, val_loader: DataLoader, model: MLP | MLR | SVM, trial: Optional[Trial] = None) -> tuple:
+    def train(self, train_loader: DataLoader, model: MLP | MLR | SVM) -> tuple:
+        '''Equivalent to the training loop'''
         model.train()
-        for epoch_num in range(self.epochs):
-            for inputs, targets in train_loader:
-                targets = targets.to(self.device)
-                inputs = inputs.to(self.device)
-                predictions = model(inputs)
-                loss = model.criterion(predictions, torch.argmax(targets, dim=1))
-                loss.backward()
-                model.optimizer.step()
-                model.zero_grad()
-            train_loss, train_metrics = self.eval(train_loader, model)
-            val_loss, val_metrics = self.eval(val_loader, model)
-            if trial:
-                trial.report(val_metrics, epoch_num)
-                # Handle pruning based on the intermediate value.
-                if trial.should_prune():
-                    raise optuna.exceptions.TrialPruned()
-        return (train_loss, train_metrics),  (val_loss, val_metrics)
+        for inputs, targets in train_loader:
+            targets = targets.to(self.device)
+            inputs = inputs.to(self.device)
+            predictions = model(inputs)
+            loss = model.criterion(predictions, torch.argmax(targets, dim=1))
+            loss.backward()
+            model.optimizer.step()
+            model.zero_grad()
     
+    def fit(self, train_loader: DataLoader, val_loader: DataLoader, model: MLP | MLR | SVM) -> tuple:
+        '''An umbrella method on top of the training and validation loops'''
+        total_val_loss = 0
+        total_val_metrics = 0
+        for epoch_num in range(self.epochs):
+            self.train(train_loader, model)
+            val_loss, val_metrics = self.eval(val_loader, model)
+            total_val_loss += val_loss
+            total_val_metrics += val_metrics
+        return total_val_loss/self.epochs, total_val_metrics/self.epochs
+
     def objective(self, trial: optuna.trial) -> float:
         # CREATE MODEL      
         self.l2_reg = trial.suggest_float("l2_reg", 1e-6, 1e-1, log=True)
@@ -79,14 +94,18 @@ class Classifier():
             self.dropout_rate = trial.suggest_float("dropout_rate", 1e-3, 0.5)
         elif self.model_name == 'MLR' or self.model_name == 'SVM':
             self.dropout_rate = 0
-        validation_loss= []
+        validation_loss = []
         # iterate through each fold. train on fold and test on test set
-        for train_fold in self.pool.get_folds():
+        for fold_index, train_fold in enumerate(self.pool.get_folds()):
             train_loader, val_loader, test_loader = self.pool.get_loaders(train_fold)
-            model = self.init_model()
-            (train_loss, train_metrics), (val_loss, val_metrics) = self.fit(train_loader, val_loader, model, trial)
+            model = self.get_model()
+            val_loss, val_metrics = self.fit(train_loader, val_loader, model)
             validation_loss.append(val_loss) # save validation loss for each fold
-        return np.mean(validation_loss)
+            avg_val_loss = np.mean(validation_loss)
+            if trial:
+                # Report the intermediate results to Optuna
+                trial.report(val_loss, fold_index)
+        return avg_val_loss
 
     def tune(self) -> None:
         study = optuna.create_study(direction="minimize")
@@ -97,14 +116,18 @@ class Classifier():
             best_dropout_rate = 0
         best_l2_reg = study.best_params['l2_reg']
         best_val_loss = study.best_value
-        
         return best_dropout_rate, best_l2_reg, best_val_loss
     
     def test(self, l2_reg: float, dropout_rate: float) -> tuple:
-        model = self.init_model()
-        model.eval()
+        # setting the best hyperparameters
+        self.l2_reg = l2_reg
+        self.dropout_rate = dropout_rate
+        # getting the model
+        model = self.get_model()
+        # getting the loaders
         train_loader, test_loader = self.pool.get_test_loaders()
-        (train_loss, train_metrics), (test_loss, test_metrics) = self.fit(
+        # training the model and testing on the test set
+        (test_loss, test_metrics) = self.fit(
             train_loader, test_loader, model
         )
         return test_loss, test_metrics

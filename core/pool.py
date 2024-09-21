@@ -37,7 +37,7 @@ class Pool():
         # setting the labeled indecies
         initial_lb_size = int(self.dataset_config['labeled_share']) # initial labeled size is always number, not percentage
         # setting folding configuration
-        self.initially_labeled_in_fold_size = initial_lb_size*float(self.dataset_config['initially_labeled_in_fold_ratio'])
+        self.initially_labeled_in_fold_size = math.floor(initial_lb_size*float(self.dataset_config['initially_labeled_in_fold_ratio']))
         self.no_folds = int(self.default_config['no_folds'])
         self.set_seed()
         self.idx_ini_label = np.random.choice(self.idx_train, size=math.floor(initial_lb_size), replace=False)  # original labeled indecies
@@ -50,7 +50,6 @@ class Pool():
         print(f"Initial labeled data: {len(self.idx_ini_label)}")
         print(f"Validation: {len(self.idx_val)}")
         print(f"Test: {len(self.idx_test)}")
-        print(f"Initial labeled data: {len(self.idx_label)}")
         print(f"Budget: {self.max_budget}")
 
 
