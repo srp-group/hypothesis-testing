@@ -22,9 +22,8 @@ class Pool():
         elif dataset_name.lower() == 'twomoons':
             self.dataset = TwoMoonsDataset(self.dataset_config)
         # setting the indecies
-        self.set_seed()
         self.idx_abs = np.arange(len(self.dataset)) # absolute indecies
-        self.newly_labeled_data = np.array([], dtype=int)
+        self.idx_newly_labeled = np.array([], dtype=int) # newly labeled indecies
 
         # static hold-out testing  
         validation_ratio = float(self.dataset_config['val_share'])
@@ -37,18 +36,15 @@ class Pool():
 
         # setting the labeled indecies
         initial_lb_size = int(self.dataset_config['labeled_share']) # initial labeled size is always number, not percentage
+        # setting folding configuration
+        self.initially_labeled_in_fold_size = initial_lb_size*float(self.dataset_config['initially_labeled_in_fold_ratio'])
+        self.no_folds = int(self.default_config['no_folds'])
         self.set_seed()
         self.idx_ini_label = np.random.choice(self.idx_train, size=math.floor(initial_lb_size), replace=False)  # original labeled indecies
-        self.set_seed()
-        self.get_unlabeled_indecies()
-        self.set_seed()
-        self.folds = self.get_initial_folds(initial_lb_size=initial_lb_size*float(self.dataset_config['initially_labeled_in_fold_ratio']), no_kfolds=int(self.default_config['no_folds']))
         if(float(self.dataset_config['budget'])<1):
             self.max_budget = math.floor(float(self.dataset_config['budget']) * len(self.idx_train)) - initial_lb_size # if maximum budget is decimal, it is percentage
         else:
             self.max_budget = int(self.dataset_config['budget']) # if maximum budget is fixed number
-
-        self.get_unlabeled_indecies()
 
         print(f"Dataset: {len(self.dataset)}")
         print(f"Initial labeled data: {len(self.idx_ini_label)}")
@@ -69,7 +65,8 @@ class Pool():
         np.random.seed(seed)
     
     def get_loaders(self, train_fold) -> tuple:
-        '''Returns the train, validation and test loaders respectively.'''
+        '''Returns the train, validation and test loaders respectively. The training fold should be passed as an argument.
+        whuch is an array of indecies.'''
         train_loader = DataLoader(Subset(self.dataset, train_fold), batch_size=int(self.dataset_config['batch_size']), shuffle=True)
         val_loader = DataLoader(Subset(self.dataset, self.idx_val), batch_size=int(self.dataset_config['batch_size']), shuffle=False)
         test_loader = DataLoader(Subset(self.dataset, self.idx_test), batch_size=int(self.dataset_config['batch_size']), shuffle=False)
@@ -77,25 +74,23 @@ class Pool():
     
     def get_test_loaders(self) -> tuple:
         '''Returns the train and test loaders respectively. train is consisted of the union train and validation sets.'''
-        idx_train = np.concatenate((self.idx_ini_label, self.newly_labeled_data))
+        idx_train = np.concatenate((self.idx_ini_label, self.idx_newly_labeled))
         train_loader = DataLoader(Subset(self.dataset, idx_train), batch_size=int(self.dataset_config['batch_size']), shuffle=True)
         test_loader = DataLoader(Subset(self.dataset, self.idx_test), batch_size=int(self.dataset_config['batch_size']), shuffle=False)
         return train_loader, test_loader
     
     def add_newly_labeled_data(self, idx:int):
-        self.newly_labeled_data = np.concatenate((self.newly_labeled_data, [idx]))
+        self.idx_newly_labeled = np.concatenate((self.idx_newly_labeled, [idx]))
 
     def get_unlabeled_indecies(self) -> np.ndarray:
         '''Returns the unlabeled data.'''
-        idx_labelled = np.concatenate((self.idx_ini_label,self.newly_labeled_data))
-        return np.setdiff1d(self.rest_data, idx_labelled)
+        idx_labelled = np.concatenate((self.idx_ini_label, self.idx_newly_labeled))
+        return np.setdiff1d(self.idx_train, idx_labelled)
     
-    def get_initial_folds(self, fold_size, no_kfolds):
-
+    def get_folds(self) -> np.ndarray:
         folds = []
-        for _ in range(no_kfolds):
-            fold_indexes = np.random.choice(self.idx_ini_label, size=fold_size, replace=False) # add the newly labelled index instance here
+        for _ in range(self.no_folds):
+            fold_indexes = np.random.choice(self.idx_ini_label, size=self.initially_labeled_in_fold_size, replace=False)
+            fold_indexes = np.concatenate((fold_indexes, self.idx_newly_labeled))
             folds.append(fold_indexes)
-        folds = np.array(folds) # convert to array
-
-        return folds
+        return np.array(folds)

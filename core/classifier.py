@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torch.utils.data import  DataLoader
 from models import MLP, MLR, SVM
@@ -59,9 +60,9 @@ class Classifier():
                 inputs = inputs.to(self.device)
                 predictions = model(inputs)
                 loss = model.criterion(predictions, torch.argmax(targets, dim=1))
-                model.zero_grad()
                 loss.backward()
                 model.optimizer.step()
+                model.zero_grad()
             train_loss, train_metrics = self.eval(train_loader, model)
             val_loss, val_metrics = self.eval(val_loader, model)
             if trial:
@@ -78,13 +79,17 @@ class Classifier():
             self.dropout_rate = trial.suggest_float("dropout_rate", 1e-3, 0.5)
         elif self.model_name == 'MLR' or self.model_name == 'SVM':
             self.dropout_rate = 0
-        model = self.init_model()
-        train_loader, val_loader, test_loader = self.pool.get_loaders()
-        (train_loss, train_metrics),  (val_loss, val_metrics) = self.fit(train_loader, val_loader, model, trial)
-        return val_loss
+        validation_loss= []
+        # iterate through each fold. train on fold and test on test set
+        for train_fold in self.pool.get_folds():
+            train_loader, val_loader, test_loader = self.pool.get_loaders(train_fold)
+            model = self.init_model()
+            (train_loss, train_metrics), (val_loss, val_metrics) = self.fit(train_loader, val_loader, model, trial)
+            validation_loss.append(val_loss) # save validation loss for each fold
+        return np.mean(validation_loss)
 
     def tune(self) -> None:
-        study = optuna.create_study(direction="minimize",sampler=optuna.samplers.TPESampler(),pruner=optuna.pruners.HyperbandPruner())
+        study = optuna.create_study(direction="minimize")
         study.optimize(self.objective, n_trials=int(self.pool.dataset_config['n_trials']))
         if self.model_name == 'MLP':
             best_dropout_rate = study.best_params['dropout_rate']

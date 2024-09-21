@@ -70,7 +70,7 @@ class ActiveLearning:
             self.test_accuracy_list.append(test_metrics.item())
 
             for j in range(int(self.default_config['random_batch_size'])):
-                self.pool.add_labeled_data(self.acquisition_function.query())
+                self.pool.add_newly_labeled_data(self.acquisition_function.query())
             
             end_time = time.time()
             elapsed_time = end_time - start_time
