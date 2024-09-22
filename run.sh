@@ -8,5 +8,3 @@
 #SBATCH --gres=gpu:1
 
 echo "This is a test echo"
-conda activate SRP_ENV
-python test.py
