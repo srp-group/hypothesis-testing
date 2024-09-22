@@ -20,7 +20,9 @@ class Classifier():
         self.model_name = str(self.pool.dataset_config['model_name'])
         self.l2_reg = None
         self.dropout_rate = None
-        self.model_state = None
+        self.initial_model_state = None
+        self.latest_tuned_model_state = None
+
 
     def init_model(self) -> MLP | MLR | SVM: # no repetition of code
         if self.model_name == 'MLP':
@@ -38,15 +40,21 @@ class Classifier():
                         self.l2_reg).to(self.device)
         return model
 
-    def get_model(self) -> MLP | MLR | SVM:
-        if not self.model_state: 
+    def get_model(self, latest = False) -> MLP | MLR | SVM:
+        if not latest:
+            if not self.initial_model_state: 
+                model = self.init_model()
+                self.initial_model_state = model.state_dict()
             model = self.init_model()
-            self.model_state = model.state_dict()
-        model = self.init_model()
-        model.load_state_dict(self.model_state)
-        if self.model_name == 'MLP':
-            model.set_dropout_rate(self.dropout_rate)
-        model.set_l2_reg(self.l2_reg)
+            model.load_state_dict(self.initial_model_state)
+            if self.model_name == 'MLP':
+                model.set_dropout_rate(self.dropout_rate)
+            model.set_l2_reg(self.l2_reg)
+        else:
+            if not self.latest_tuned_model_state:
+                raise Exception('No tuned model state found!!!')
+            model = self.init_model()
+            model.load_state_dict(self.latest_tuned_model_state)
         return model
 
     def eval(self, loader: DataLoader, model: MLP | MLR | SVM ) -> tuple:
@@ -130,11 +138,11 @@ class Classifier():
         (test_loss, test_metrics) = self.fit(
             train_loader, test_loader, model
         )
+        # saving the model state
+        self.latest_tuned_model_state = model.state_dict()
         return test_loss, test_metrics
     
     def probability(self, x):   
-        model = self.init_model()
-        model.train()
+        model = self.get_model(latest=True)
         with torch.no_grad():
-            a = model(x.to(self.device))
             return model(x.to(self.device))
