@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #SBATCH --job-name=SRP
 #SBATCH --output=%x_%j.log
 #SBATCH --error=%x_%j.err
