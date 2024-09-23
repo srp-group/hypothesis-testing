@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=SRP
-#SBATCH --output=%x_%j.log
-#SBATCH --error=%x_%j.err
+#SBATCH --output=../out/%x_%j.log
+#SBATCH --error=../out/%x_%j.err
 #SBATCH --mail-user=eyvazkhani@uni-hildesheim.de
 #SBATCH --mail-type=ALL
 #SBATCH --partition=STUD
