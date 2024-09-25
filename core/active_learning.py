@@ -98,8 +98,8 @@ class ActiveLearning:
         
         
         file_path = self.data_logger.log_primary_results(self.test_loss_list, self.best_dropout_rate_list, self.best_l2_reg_list, self.test_accuracy_list)
-        self.visualizer.plot_results(file_path)
         self.log_params()
+        self.visualizer.plot_results(file_path)
     
     def log_params(self) -> None:
         results_dict = dict(self.database_config)
