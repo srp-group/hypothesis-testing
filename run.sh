@@ -7,4 +7,5 @@
 #SBATCH --partition=STUD
 #SBATCH --gres=gpu:1
 
-echo "This is a test echo"
+source activate SRP_ENV
+srun python main.py --r 42 --d "dna" --a "random" --m "MLP"

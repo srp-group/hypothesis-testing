@@ -9,29 +9,39 @@ class MLP(nn.Module):
     def __init__(self, n_features: int, n_classes: int, l2_reg: float, dropout_rate: float) -> None:
         super().__init__()
         self.layers = nn.Sequential()
-        # input layer
-        self.layers.add_module(f"dense_0", nn.Linear(n_features, 1024))
+        # input layer and first hidden layer
+        self.layers.add_module(f"dense_0", nn.Linear(n_features, 256))
         self.layers.add_module(f"activation_0", nn.ReLU())
         self.layers.add_module(f"dropout_0", nn.Dropout(dropout_rate))
-        # first hidden layer
-        self.layers.add_module(f"dense_1", nn.Linear(1024, 1024))
+        # second hidden layer
+        self.layers.add_module(f"dense_1", nn.Linear(256, 64))
         self.layers.add_module(f"activation_1", nn.ReLU())
         self.layers.add_module(f"dropout_1", nn.Dropout(dropout_rate))
-        # second hidden layer
-        self.layers.add_module(f"dense_2", nn.Linear(1024, 1024))
+        # third hidden layer
+        self.layers.add_module(f"dense_2", nn.Linear(64, 256))
         self.layers.add_module(f"activation_2", nn.ReLU())
         self.layers.add_module(f"dropout_2", nn.Dropout(dropout_rate))
+        # fourth hidden layer
+        self.layers.add_module(f"dense_3", nn.Linear(256, 64))
+        self.layers.add_module(f"activation_3", nn.ReLU())
+        self.layers.add_module(f"dropout_3", nn.Dropout(dropout_rate))
+        # fifth hidden layer
+        self.layers.add_module(f"dense_4", nn.Linear(64, 256))
+        self.layers.add_module(f"activation_4", nn.ReLU())
+        self.layers.add_module(f"dropout_4", nn.Dropout(dropout_rate))
+        # sixth hidden layer
+        self.layers.add_module(f"dense_5", nn.Linear(256, 64))
+        self.layers.add_module(f"activation_5", nn.ReLU())
+        self.layers.add_module(f"dropout_5", nn.Dropout(dropout_rate))
         # output layer
-        self.layers.add_module(f"dense_4", nn.Linear(1024, n_classes))
-        self.layers.add_module(f"activation_4", nn.Softmax(dim=1))
+        self.layers.add_module(f"dense_6", nn.Linear(64, n_classes))
+        self.layers.add_module(f"activation_6", nn.Softmax(dim=1))
         # loss function
         self.criterion = nn.CrossEntropyLoss()
         # optimizer
         self.optimizer = torch.optim.Adam(self.parameters(), weight_decay=l2_reg)
         # metric
         self.metric = metrics.MulticlassAccuracy(num_classes=n_classes)
-        # initialize the weights
-        self.apply(self._init_weights)
 
     def _init_weights(self, module):
         if isinstance(module, nn.Linear):

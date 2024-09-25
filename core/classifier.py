@@ -12,19 +12,19 @@ import logging
 optuna.logging.set_verbosity(optuna.logging.ERROR)
 
 class Classifier():
-    def __init__(self, pool: core.Pool) -> None:
+    def __init__(self, pool: core.Pool, model_name: str) -> None:
         self.pool = pool
-        # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.device = torch.device("cpu") # my GPU is slower than CPU LOL
+        self.model_name = model_name
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"Runiing on: {self.device}")
+        # self.device = torch.device("cpu") # to specifically run on cpu
         self.epochs = int(self.pool.dataset_config['epochs'])
-        self.model_name = str(self.pool.dataset_config['model_name'])
         self.l2_reg = None
         self.dropout_rate = None
-        self.initial_model_state = None
-        self.latest_tuned_model_state = None
 
 
     def init_model(self) -> MLP | MLR | SVM: # no repetition of code
+        self.pool.set_seed()
         if self.model_name == 'MLP':
             model = MLP(int(self.pool.dataset_config['n_features']),
                         int(self.pool.dataset_config['n_classes']),
@@ -38,23 +38,6 @@ class Classifier():
             model = SVM(int(self.pool.dataset_config['n_features']),
                         int(self.pool.dataset_config['n_classes']),
                         self.l2_reg).to(self.device)
-        return model
-
-    def get_model(self, latest = False) -> MLP | MLR | SVM:
-        if not latest:
-            if not self.initial_model_state: 
-                model = self.init_model()
-                self.initial_model_state = model.state_dict()
-            model = self.init_model()
-            model.load_state_dict(self.initial_model_state)
-            if self.model_name == 'MLP':
-                model.set_dropout_rate(self.dropout_rate)
-            model.set_l2_reg(self.l2_reg)
-        else:
-            if not self.latest_tuned_model_state:
-                raise Exception('No tuned model state found!!!')
-            model = self.init_model()
-            model.load_state_dict(self.latest_tuned_model_state)
         return model
 
     def eval(self, loader: DataLoader, model: MLP | MLR | SVM ) -> tuple:
@@ -86,14 +69,10 @@ class Classifier():
     
     def fit(self, train_loader: DataLoader, val_loader: DataLoader, model: MLP | MLR | SVM) -> tuple:
         '''An umbrella method on top of the training and validation loops'''
-        total_val_loss = 0
-        total_val_metrics = 0
         for epoch_num in range(self.epochs):
             self.train(train_loader, model)
             val_loss, val_metrics = self.eval(val_loader, model)
-            total_val_loss += val_loss
-            total_val_metrics += val_metrics
-        return total_val_loss/self.epochs, total_val_metrics/self.epochs
+        return val_loss, val_metrics
 
     def objective(self, trial: optuna.trial) -> float:
         # CREATE MODEL      
@@ -104,9 +83,9 @@ class Classifier():
             self.dropout_rate = 0
         validation_loss = []
         # iterate through each fold. train on fold and test on test set
-        for fold_index, train_fold in enumerate(self.pool.get_folds()):
-            train_loader, val_loader, test_loader = self.pool.get_loaders(train_fold)
-            model = self.get_model()
+        for fold_index, (train_fold, val_fold) in enumerate(self.pool.get_folds()):
+            train_loader, val_loader, test_loader = self.pool.get_loaders(train_fold, val_fold)
+            model = self.init_model()
             val_loss, val_metrics = self.fit(train_loader, val_loader, model)
             validation_loss.append(val_loss) # save validation loss for each fold
             avg_val_loss = np.mean(validation_loss)
@@ -116,7 +95,7 @@ class Classifier():
         return avg_val_loss
 
     def tune(self) -> None:
-        study = optuna.create_study(direction="minimize")
+        study = optuna.create_study(direction="minimize", sampler=optuna.samplers.TPESampler(seed=self.pool.random_seed))
         study.optimize(self.objective, n_trials=int(self.pool.dataset_config['n_trials']))
         if self.model_name == 'MLP':
             best_dropout_rate = study.best_params['dropout_rate']
@@ -131,18 +110,11 @@ class Classifier():
         self.l2_reg = l2_reg
         self.dropout_rate = dropout_rate
         # getting the model
-        model = self.get_model()
+        model = self.init_model()
         # getting the loaders
         train_loader, test_loader = self.pool.get_test_loaders()
         # training the model and testing on the test set
         (test_loss, test_metrics) = self.fit(
             train_loader, test_loader, model
         )
-        # saving the model state
-        self.latest_tuned_model_state = model.state_dict()
-        return test_loss, test_metrics
-    
-    def probability(self, x):   
-        model = self.get_model(latest=True)
-        with torch.no_grad():
-            return model(x.to(self.device))
+        return test_loss, test_metrics, model
