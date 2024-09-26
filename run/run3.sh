@@ -8,14 +8,6 @@
 #SBATCH --gres=gpu:1
 
 source activate SRP_ENV
-srun python main.py --r 42 --d "dna" --a "random" --m "MLP"
-srun python main.py --r 42 --d "dna" --a "entropy" --m "MLP"
-
-srun python main.py --r 42 --d "splice" --a "random" --m "MLP"
-srun python main.py --r 42 --d "splice" --a "entropy" --m "MLP"
 
 srun python main.py --r 42 --d "protein" --a "random" --m "MLP"
 srun python main.py --r 42 --d "protein" --a "entropy" --m "MLP"
-
-srun python main.py --r 42 --d "twomoons" --a "random" --m "MLP"
-srun python main.py --r 42 --d "twomoons" --a "entropy" --m "MLP"
