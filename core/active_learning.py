@@ -27,6 +27,12 @@ class ActiveLearning:
         self.set_logging_dir()
         self.visualizer = core.Visualization(dataset_name=self.dataset_name, should_show_the_plot=bool(int(self.default_config['should_show_the_plot'])), logging_dir=self.logging_dir, model_name=self.model_name)
         self.data_logger = core.Logger(dataset_name=self.dataset_name, logging_dir=self.logging_dir)
+        # creating the variables
+        self.allgemein_formatted_time = None
+        self.test_loss_list = []
+        self.best_dropout_rate_list = []
+        self.best_l2_reg_list = []
+        self.test_accuracy_list = []
 
 
     def get_config(self) -> None:
@@ -51,10 +57,6 @@ class ActiveLearning:
 
     def run(self) -> None:
         allgemein_start_time = time.time()
-        self.test_loss_list = []
-        self.best_dropout_rate_list = []
-        self.best_l2_reg_list = []
-        self.test_accuracy_list = []
 
         al_iterations = int(self.pool.max_budget) // int(self.default_config['random_batch_size'])
         for i in range(al_iterations):
