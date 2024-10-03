@@ -8,33 +8,35 @@ from torcheval import metrics
 class MLP(nn.Module):
     def __init__(self, n_features: int, n_classes: int, l2_reg: float, dropout_rate: float) -> None:
         super().__init__()
+        narrow_factor = 32
+        wide_factor = 128
         self.layers = nn.Sequential()
         # input layer and first hidden layer
-        self.layers.add_module(f"dense_0", nn.Linear(n_features, 256))
+        self.layers.add_module(f"dense_0", nn.Linear(n_features, wide_factor))
         self.layers.add_module(f"activation_0", nn.ReLU())
         self.layers.add_module(f"dropout_0", nn.Dropout(dropout_rate))
         # second hidden layer
-        self.layers.add_module(f"dense_1", nn.Linear(256, 64))
+        self.layers.add_module(f"dense_1", nn.Linear(wide_factor, narrow_factor))
         self.layers.add_module(f"activation_1", nn.ReLU())
         self.layers.add_module(f"dropout_1", nn.Dropout(dropout_rate))
         # third hidden layer
-        self.layers.add_module(f"dense_2", nn.Linear(64, 256))
+        self.layers.add_module(f"dense_2", nn.Linear(narrow_factor, wide_factor))
         self.layers.add_module(f"activation_2", nn.ReLU())
         self.layers.add_module(f"dropout_2", nn.Dropout(dropout_rate))
         # fourth hidden layer
-        self.layers.add_module(f"dense_3", nn.Linear(256, 64))
+        self.layers.add_module(f"dense_3", nn.Linear(wide_factor, narrow_factor))
         self.layers.add_module(f"activation_3", nn.ReLU())
         self.layers.add_module(f"dropout_3", nn.Dropout(dropout_rate))
         # fifth hidden layer
-        self.layers.add_module(f"dense_4", nn.Linear(64, 256))
+        self.layers.add_module(f"dense_4", nn.Linear(narrow_factor, wide_factor))
         self.layers.add_module(f"activation_4", nn.ReLU())
         self.layers.add_module(f"dropout_4", nn.Dropout(dropout_rate))
         # sixth hidden layer
-        self.layers.add_module(f"dense_5", nn.Linear(256, 64))
+        self.layers.add_module(f"dense_5", nn.Linear(wide_factor, narrow_factor))
         self.layers.add_module(f"activation_5", nn.ReLU())
         self.layers.add_module(f"dropout_5", nn.Dropout(dropout_rate))
         # output layer
-        self.layers.add_module(f"dense_6", nn.Linear(64, n_classes))
+        self.layers.add_module(f"dense_6", nn.Linear(narrow_factor, n_classes))
         self.layers.add_module(f"activation_6", nn.Softmax(dim=1))
         # loss function
         self.criterion = nn.CrossEntropyLoss()
