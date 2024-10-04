@@ -8,8 +8,8 @@ from torcheval import metrics
 class MLP(nn.Module):
     def __init__(self, n_features: int, n_classes: int, l2_reg: float, dropout_rate: float) -> None:
         super().__init__()
-        narrow_factor = 32
-        wide_factor = 128
+        narrow_factor = 64
+        wide_factor = 256
         self.layers = nn.Sequential()
         # input layer and first hidden layer
         self.layers.add_module(f"dense_0", nn.Linear(n_features, wide_factor))

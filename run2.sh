@@ -8,5 +8,4 @@
 #SBATCH --gres=gpu:1
 
 source activate SRP_ENV
-srun python main.py --r 37 --d "splice" --a "random" --m "MLP"
 srun python main.py --r 37 --d "splice" --a "entropy" --m "MLP"
