@@ -8,6 +8,7 @@ class Entropy():
     
     def get_scores(self, all_unlabelled_indecies, best_model: torch.nn.Module) -> np.ndarray:
         values = self.pool.dataset.x[all_unlabelled_indecies]
+        best_model.eval()
         with torch.no_grad():
             probs = best_model(torch.Tensor(values).to(self.clf.device)).cpu()
         log_probs = torch.log(probs + torch.finfo(torch.float32).smallest_normal)

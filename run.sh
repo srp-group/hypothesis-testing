@@ -8,4 +8,4 @@
 #SBATCH --gres=gpu:1
 
 source activate SRP_ENV
-srun python main.py --r 37 --d "dna" --a "entropy" --m "MLP"
+srun python main.py --r 37 --d "dna" --a "bald" --m "MLP"

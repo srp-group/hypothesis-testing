@@ -23,6 +23,8 @@ class ActiveLearning:
             self.acquisition_function = acquisitions.Random(self.pool)
         elif self.acq_func.lower() == 'entropy': # currently only works for MLP
             self.acquisition_function = acquisitions.Entropy(self.pool, self.clf)
+        elif self.acq_func.lower() == 'bald': 
+            self.acquisition_function = acquisitions.BALD(self.pool, self.clf)
         # initialize the visualization and logging components
         self.set_logging_dir()
         self.visualizer = core.Visualization(dataset_name=self.dataset_name, should_show_the_plot=bool(int(self.default_config['should_show_the_plot'])), logging_dir=self.logging_dir, model_name=self.model_name)
