@@ -8,7 +8,7 @@ class BALD():
         self.forward_passes = 100
     
     def get_scores(self, all_unlabelled_indecies, best_model: torch.nn.Module) -> np.ndarray:
-        values = self.pool.dataset.x[all_unlabelled_indecies]
+        values = torch.tensor(self.pool.dataset.x[all_unlabelled_indecies]).to(self.clf.device)
         no_classes = int(self.pool.dataset_config['n_classes'])
         total_predictions = torch.empty((0, len(values), no_classes)).to(self.clf.device)
         best_model.train()
