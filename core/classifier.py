@@ -76,9 +76,9 @@ class Classifier():
 
     def objective(self, trial: optuna.trial) -> float:
         # CREATE MODEL      
-        self.l2_reg = trial.suggest_float("l2_reg", 1e-6, 1e-1, log=True)
+        self.l2_reg = trial.suggest_float("l2_reg")#, 1e-6, 1e-1, log=True)
         if self.model_name == 'MLP':
-            self.dropout_rate = trial.suggest_float("dropout_rate", 1e-3, 0.5)
+            self.dropout_rate = trial.suggest_float("dropout_rate")#, 1e-3, 0.5)
         elif self.model_name == 'MLR' or self.model_name == 'SVM':
             self.dropout_rate = 0
         validation_loss = []
