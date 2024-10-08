@@ -6,18 +6,18 @@ class Entropy():
         self.pool = pool
         self.clf = clf
     
-    def get_scores(self, values=None):
-        values = self.pool.dataset.x[self.pool.get_unlabeled_indecies()]
-        probs = self.clf.probability(torch.Tensor(values)).cpu()
+    def get_scores(self, all_unlabelled_indecies, best_model: torch.nn.Module) -> np.ndarray:
+        values = self.pool.dataset.x[all_unlabelled_indecies]
+        best_model.eval()
+        with torch.no_grad():
+            probs = best_model(torch.Tensor(values).to(self.clf.device)).cpu()
         log_probs = torch.log(probs + torch.finfo(torch.float32).smallest_normal)
         U = -(probs*log_probs).sum(axis=1)
         return U
 
-    def query(self) -> int:
+    def query(self, best_model: torch.nn.Module) -> int:
         all_unlabelled_indecies = self.pool.get_unlabeled_indecies()
-        print(f"current number of unlabeled data: {len(all_unlabelled_indecies)}")
-        all_scores = self.get_scores(all_unlabelled_indecies)
+        all_scores = self.get_scores(all_unlabelled_indecies, best_model)
         max_scores = np.argwhere(np.isclose(all_scores, all_scores.max())).ravel()
-        self.pool.set_seed()
         idx = np.random.choice(max_scores, 1)[0]
         return all_unlabelled_indecies[idx]

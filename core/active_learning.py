@@ -8,22 +8,33 @@ import datetime
 import time
 from datetime import timedelta
 class ActiveLearning:
-    def __init__(self, dataset_name: str, random_seed: int) -> None:
+    def __init__(self, random_seed, dataset_name, acq_func, model_name) -> None:
+        self.model_name = model_name
+        self.random_seed = random_seed
         self.dataset_name = dataset_name
+        self.acq_func = acq_func
         # Load the configuration
-        self.get_config()
+        self.get_config()       
         # Initialize the core components
-        self.pool = core.Pool(dataset_name=dataset_name, random_seed=random_seed,
+        self.pool = core.Pool(dataset_name=self.dataset_name, random_seed=self.random_seed,
                 database_config=self.database_config, default_config=self.default_config)
-        self.clf = core.Classifier(pool=self.pool)
-        if self.database_config['al_algo'] == 'random':
+        self.clf = core.Classifier(pool=self.pool, model_name=self.model_name)
+        if self.acq_func.lower() == 'random':
             self.acquisition_function = acquisitions.Random(self.pool)
-        elif self.database_config['al_algo'] == 'entropy': # currently only works for MLP
+        elif self.acq_func.lower() == 'entropy': # currently only works for MLP
             self.acquisition_function = acquisitions.Entropy(self.pool, self.clf)
+        elif self.acq_func.lower() == 'bald': 
+            self.acquisition_function = acquisitions.BALD(self.pool, self.clf)
         # initialize the visualization and logging components
         self.set_logging_dir()
-        self.visualizer = core.Visualization(dataset_name=self.dataset_name, should_show_the_plot=bool(int(self.default_config['should_show_the_plot'])), logging_dir=self.logging_dir, model_name=str(self.database_config['model_name']))
+        self.visualizer = core.Visualization(dataset_name=self.dataset_name, should_show_the_plot=bool(int(self.default_config['should_show_the_plot'])), logging_dir=self.logging_dir, model_name=self.model_name)
         self.data_logger = core.Logger(dataset_name=self.dataset_name, logging_dir=self.logging_dir)
+        # creating the variables
+        self.allgemein_formatted_time = None
+        self.test_loss_list = []
+        self.best_dropout_rate_list = []
+        self.best_l2_reg_list = []
+        self.test_accuracy_list = []
 
 
     def get_config(self) -> None:
@@ -32,9 +43,9 @@ class ActiveLearning:
         params_path = os.path.normpath(params_path)
         config = ConfigParser()
         config.read(params_path)
-        self.database_config = config[self.dataset_name.upper()]
         self.default_config = config['DEFAULT']
-    
+        self.database_config = config[self.dataset_name.upper()]
+
     def set_logging_dir(self) -> None:
         current_time = datetime.datetime.now()
         date_path = current_time.strftime("%Y-%m-%d_%H-%M-%S") 
@@ -48,20 +59,16 @@ class ActiveLearning:
 
     def run(self) -> None:
         allgemein_start_time = time.time()
-        self.test_loss_list = []
-        self.best_dropout_rate_list = []
-        self.best_l2_reg_list = []
-        self.test_accuracy_list = []
 
         al_iterations = int(self.pool.max_budget) // int(self.default_config['random_batch_size'])
         for i in range(al_iterations):
             start_time = time.time()
 
             print(f"============ iteration: {i+1} ============")
-            print(f"current number of labeled data: {len(self.pool.idx_label)}")
+            print(f"current number of newly labeled data: {len(self.pool.idx_newly_labeled)}")
 
             best_dropout_rate, best_l2_reg, best_val_loss = self.clf.tune()
-            test_loss, test_metrics = self.clf.test(best_l2_reg, best_dropout_rate)
+            test_loss, test_metrics, best_model = self.clf.test(best_l2_reg, best_dropout_rate)
             
             self.test_loss_list.append(test_loss)
             self.best_dropout_rate_list.append(best_dropout_rate)  
@@ -69,7 +76,7 @@ class ActiveLearning:
             self.test_accuracy_list.append(test_metrics.item())
 
             for j in range(int(self.default_config['random_batch_size'])):
-                self.pool.add_labeled_data(self.acquisition_function.query())
+                self.pool.add_newly_labeled_data(self.acquisition_function.query(best_model))
             
             end_time = time.time()
             elapsed_time = end_time - start_time
@@ -95,12 +102,14 @@ class ActiveLearning:
         
         
         file_path = self.data_logger.log_primary_results(self.test_loss_list, self.best_dropout_rate_list, self.best_l2_reg_list, self.test_accuracy_list)
-        self.visualizer.plot_results(file_path)
         self.log_params()
+        self.visualizer.plot_results(file_path)
     
     def log_params(self) -> None:
         results_dict = dict(self.database_config)
         results_dict['dataset_name'] = self.dataset_name
+        results_dict['acquisition_function'] = self.acq_func
+        results_dict['model_name'] = self.model_name
         if self.allgemein_formatted_time:
             results_dict['time_spent'] = self.allgemein_formatted_time
         results_dict['random_seed'] = self.pool.random_seed
