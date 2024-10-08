@@ -21,7 +21,7 @@ class Classifier():
         self.epochs = int(self.pool.dataset_config['epochs'])
         self.l2_reg = None
         self.dropout_rate = None
-
+        self.should_tune_dropout = bool(int(self.pool.default_config['should_tune_dropout']))
 
     def init_model(self) -> MLP | MLR | SVM: # no repetition of code
         self.pool.set_seed()
@@ -29,7 +29,8 @@ class Classifier():
             model = MLP(int(self.pool.dataset_config['n_features']),
                         int(self.pool.dataset_config['n_classes']),
                         self.l2_reg,
-                        self.dropout_rate).to(self.device)
+                        self.dropout_rate,
+                        self.should_tune_dropout).to(self.device)
         elif self.model_name == 'MLR':
             model = MLR(int(self.pool.dataset_config['n_features']),
                         int(self.pool.dataset_config['n_classes']),
@@ -76,10 +77,10 @@ class Classifier():
 
     def objective(self, trial: optuna.trial) -> float:
         # CREATE MODEL      
-        self.l2_reg = trial.suggest_float("l2_reg")#, 1e-6, 1e-1, log=True)
-        if self.model_name == 'MLP':
-            self.dropout_rate = trial.suggest_float("dropout_rate")#, 1e-3, 0.5)
-        elif self.model_name == 'MLR' or self.model_name == 'SVM':
+        self.l2_reg = trial.suggest_float("l2_reg", 1e-6, 1, log=True)
+        if self.model_name == 'MLP' and self.should_tune_dropout:
+            self.dropout_rate = trial.suggest_float("dropout_rate", 0, 1)
+        elif self.model_name == 'MLR' or self.model_name == 'SVM' or not self.should_tune_dropout:
             self.dropout_rate = 0
         validation_loss = []
         # iterate through each fold. train on fold and test on test set
@@ -97,9 +98,9 @@ class Classifier():
     def tune(self) -> None:
         study = optuna.create_study(direction="minimize", sampler=optuna.samplers.TPESampler(seed=self.pool.random_seed))
         study.optimize(self.objective, n_trials=int(self.pool.dataset_config['n_trials']))
-        if self.model_name == 'MLP':
+        if self.model_name == 'MLP' and self.should_tune_dropout:
             best_dropout_rate = study.best_params['dropout_rate']
-        elif self.model_name == 'MLR' or self.model_name == 'SVM':
+        elif self.model_name == 'MLR' or self.model_name == 'SVM' or not self.should_tune_dropout:
             best_dropout_rate = 0
         best_l2_reg = study.best_params['l2_reg']
         best_val_loss = study.best_value
