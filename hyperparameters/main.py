@@ -189,7 +189,7 @@ def main():
                                 n_classes=dataset.Y.shape[1],
                                 l2_reg=l2_lambda,
                                 dropout_rate=0,
-                                should_tune_dropout=False)    
+                                should_tune_dropout=False).to(device)
                     val_loss, val_metrics = fit(train_loader, val_loader, model)
                     # saving values
                     d_values.append(d)
