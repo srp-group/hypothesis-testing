@@ -17,9 +17,9 @@ epochs = 50
 test_ratio = 0.4
 batch_size = 32
 random_seed = 42
-number_of_log_labmdas = 1#20
-number_of_linear_labmdas = 1#10
-number_of_random_seeds = 1#10
+number_of_log_labmdas = 20
+number_of_linear_labmdas = 10
+number_of_random_seeds = 10
 
 class TwoMoonsDataset(Dataset):
     def __init__(self) -> None:
