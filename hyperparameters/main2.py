@@ -11,6 +11,7 @@ import os
 import json
 from typing import Dict, Tuple, List
 from collections import OrderedDict
+import random
 
 # %%
 class GeneralizedDataset(Dataset):
@@ -179,7 +180,7 @@ class ModelWrapper:
         self,
         X_train: np.ndarray,
         y_train: np.ndarray,
-        epochs: int = 10,
+        epochs: int = 50,
         batch_size: int = 32
     ) -> None:
         """
@@ -256,7 +257,7 @@ def run_experiment(
 
     Returns:
     - results_df (pd.DataFrame): DataFrame containing the results with columns
-                                  ['dataset_name', 'reg_type', 'reg_val', 'loss', 'seed', 'data_size_pct']
+        ['dataset_name', 'reg_type', 'reg_val', 'loss', 'seed', 'data_size_pct']
     """
     # Define experiment parameters
     seeds: List[int] = list(range(1, 31))  # Seeds 1 to 10
@@ -300,11 +301,15 @@ def run_experiment(
         X_test, y_test = X[test_idx], y[test_idx]
 
         # Iterate over each seed for reproducibility
-        
+
         for seed in tqdm(seeds, desc=f"Seeds for {dataset_name}", leave=False):
             # print(seed)
-             
+            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.benchmark = False
+            torch.manual_seed(seed)
+            torch.cuda.manual_seed_all(seed)
             np.random.seed(seed)
+            random.seed(seed)
             
             # Iterate over each dataset size percentage
             for d in dataset_sizes_pct:
@@ -332,7 +337,7 @@ def run_experiment(
                     )
 
                     # Train the model on the sampled training data
-                    model.train(X_train_d, y_train_d, epochs=3, batch_size=32)  # Adjust epochs and batch_size as needed
+                    model.train(X_train_d, y_train_d, epochs=50, batch_size=32)  # Adjust epochs and batch_size as needed
 
                     # Evaluate the model on the test set to obtain the loss
                     loss = model.evaluate(X_test, y_test)
@@ -394,13 +399,11 @@ def load_datasets(dataset_paths: List[str]) -> Dict[str, Tuple[np.ndarray, np.nd
     return datasets
 
 # %%
-%%time
-
 # List of dataset file paths
 dataset_paths = [
-    r'G:\My Drive\DA Masters\SRP\hypothesis-testing\data\splice\splice.npz',
-    r'G:\My Drive\DA Masters\SRP\hypothesis-testing\data\protein\protein.npz',
-    r'G:\My Drive\DA Masters\SRP\hypothesis-testing\data\dna\dna.npz'
+    'data/splice/splice.npz',
+    'data/protein/protein.npz',
+    'data/dna/dna.npz'
     # Add more dataset paths as needed
 ]
 
@@ -433,7 +436,7 @@ for dataset_path in dataset_paths:
         results_df = run_experiment(dataset, reg_type, device=device)
         
         # Define the CSV filename based on dataset and regularization type
-        csv_filename = f'{dataset_name}_{reg_type}_results_2.csv'
+        csv_filename = f'{dataset_name}_{reg_type}_results.csv'
         
         # Save the results to the CSV file
         results_df.to_csv(csv_filename, index=False)
