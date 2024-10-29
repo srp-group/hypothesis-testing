@@ -8,4 +8,5 @@
 #SBATCH --gres=gpu:1
 
 source activate SRP_ENV
-srun python main.py --r 37 --d "splice" --a "bald" --m "MLP"
+# srun python main.py --r 37 --d "splice" --a "bald" --m "MLP"
+srun python hyperparameters/main2.py
