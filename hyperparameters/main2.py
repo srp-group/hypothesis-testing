@@ -151,7 +151,7 @@ class ModelWrapper:
         """
         self.device = device
         reg_type = reg_type.lower()
-
+        self.epochs = 500
         if reg_type == 'dropout':
             use_dropout = True
             weight_decay = 0.0  # Disable L2 regularization when using dropout
@@ -176,7 +176,56 @@ class ModelWrapper:
         self.reg_type = reg_type
         self.reg_val = reg_val
 
-    def train(
+    def eval(self, loader: DataLoader) -> tuple:
+        '''Equivalent to the test loop. Used by both test and validation.'''
+        self.model.eval()
+        total_loss = 0
+        total_acc = 0
+        with torch.no_grad():
+            for inputs, targets in loader:
+                targets = targets.to(self.device)
+                inputs = inputs.to(self.device)
+                predictions = self.model(inputs)
+                batch_loss = self.model.criterion(predictions, targets)
+                total_loss += batch_loss.item()
+                total_acc += self.model.calculate_accuracy(predictions, targets)
+        return total_loss/len(loader), total_acc/len(loader)
+    
+    def train(self, train_loader: DataLoader) -> tuple:
+        '''Equivalent to the training loop'''
+        self.model.train()
+        for inputs, targets in train_loader:
+            targets = targets.to(self.device)
+            inputs = inputs.to(self.device)
+            predictions = self.model(inputs)
+            loss = self.model.criterion(predictions, targets)
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+    
+    def fit(self, train_loader: DataLoader, val_loader: DataLoader) -> tuple:
+        '''An umbrella method on top of the training and validation loops'''
+        best_val_loss = float('inf')
+        patience_counter = 0
+
+        for epoch_num in range(self.epochs):
+            self.train(train_loader)
+            val_loss, val_acc = self.eval(val_loader)
+
+            # Check for improvement
+            if val_loss < best_val_loss - 1e-4:  # Lower is better 
+                best_val_loss = val_loss
+                patience_counter = 0  # Reset patience counter on improvement
+            else:
+                patience_counter += 1
+
+
+            # Early stopping
+            if patience_counter >= 5:
+                break
+        return best_val_loss, val_acc
+    
+    def _before_train(
         self,
         X_train: np.ndarray,
         y_train: np.ndarray,
@@ -229,7 +278,7 @@ class ModelWrapper:
             # Optionally, log the loss
             # print(f"Epoch {epoch}/{epochs} - Loss: {avg_loss:.4f}")
 
-    def evaluate(self, X_test: np.ndarray, y_test: np.ndarray) -> float:
+    def _before_evaluate(self, X_test: np.ndarray, y_test: np.ndarray) -> float:
         """
         Evaluates the model on the test data and returns the loss.
 
@@ -297,7 +346,7 @@ def run_experiment(
         ['dataset_name', 'reg_type', 'reg_val', 'loss', 'seed', 'data_size_pct']
     """
     # Define experiment parameters
-    seeds: List[int] = list(range(120, 140))  # Seeds 1 to 10
+    seeds: List[int] = list(range(120, 150))  # Seeds 1 to 10
     dataset_sizes_pct: np.ndarray = np.unique(np.concatenate([np.linspace(1, 10, num=10), np.linspace(10, 100, num=10)])).astype(np.int32) # Dataset sizes in percentages
 
     # Initialize a list to store all results
@@ -362,13 +411,20 @@ def run_experiment(
                         dropout_rate=0.5,  # Default dropout rate; overridden if reg_type is 'dropout'
                         device=device
                     )
+                    train_dataset = TensorDataset(
+                        torch.tensor(X_train_d, dtype=torch.float32),
+                        torch.tensor(y_train_d, dtype=torch.long)
+                    )
+                    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
                     
-                    # Train the model on the sampled training data
-                    model.train(X_train_d, y_train_d, epochs=50, batch_size=32, total_steps=1000)  # Adjust epochs and batch_size as needed
-
-                    # Evaluate the model on the test set to obtain the loss
-                    loss = model.evaluate(X_test, y_test)
-
+                    validation_dataset = TensorDataset(
+                        torch.tensor(X_test, dtype=torch.float32),
+                        torch.tensor(y_test, dtype=torch.long)
+                    )
+                    validation_loader = DataLoader(validation_dataset, batch_size=32, shuffle=False)
+                    
+                    loss, val_acc = model.fit(train_loader, validation_loader)
+                    
                     # Store the results
                     results.append({
                         'dataset_name': dataset_name,
@@ -376,7 +432,8 @@ def run_experiment(
                         'reg_val': reg_val,
                         'loss': loss,
                         'seed': seed,
-                        'data_size_pct': d
+                        'data_size_pct': d,
+                        'val_acc': val_acc
                     })
 
         print(f"Completed processing for dataset: {dataset_name}\n")
