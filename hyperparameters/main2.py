@@ -132,7 +132,7 @@ class ModelWrapper:
     def __init__(
         self,
         reg_type: str,
-        reg_val: float,
+        reg_val: np.float32,
         n_features: int,
         n_classes: int,
         dropout_rate: float = 0.5,
@@ -181,7 +181,9 @@ class ModelWrapper:
         X_train: np.ndarray,
         y_train: np.ndarray,
         epochs: int = 50,
-        batch_size: int = 32
+        batch_size: int = 32,
+        step: int = 0,
+        total_steps: int = 500
     ) -> None:
         """
         Trains the model on the provided training data.
@@ -201,7 +203,7 @@ class ModelWrapper:
         )
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
-        for epoch in range(1, epochs + 1):
+        while step < total_steps:
             epoch_losses = []
             for batch_X, batch_y in train_loader:
                 batch_X, batch_y = batch_X.to(self.device), batch_y.to(self.device)
@@ -215,6 +217,13 @@ class ModelWrapper:
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
+                
+                # Increment step
+                step += 1
+
+                # Stop if total_steps is reached
+                if step >= total_steps:
+                    break
 
             # avg_loss = np.mean(epoch_losses)
             # Optionally, log the loss
@@ -241,6 +250,34 @@ class ModelWrapper:
 
         return loss
 
+def get_lambda_list(reg_type: str, dataset_name: str) -> np.ndarray:
+    # Define lambda_list based on regularization type
+    if dataset_name == 'splice':
+        if reg_type.lower() == 'l2':
+            lambda_list: np.ndarray = np.unique(np.concatenate([np.logspace(-6, -2, num=5) ,np.linspace(0.01, 0.1, num=10)])).astype(np.float32)
+        elif reg_type.lower() == 'dropout':
+            # For dropout, reg_val represents the dropout rate; typically between 0.1 and 0.9
+            lambda_list: np.ndarray = np.array([0.0, 0.1, 0.3, 0.5, 0.6, 0.7, 0.8], dtype=np.float32)
+    elif dataset_name == 'protein':
+        if reg_type.lower() == 'l2':
+            lambda_list: np.ndarray = np.unique(np.concatenate([np.logspace(-6, -3, num=4) ,np.linspace(0.001, 0.01, num=10), np.logspace(-2, -1, num=2)])).astype(np.float32)
+        elif reg_type.lower() == 'dropout':
+            # For dropout, reg_val represents the dropout rate; typically between 0.1 and 0.9
+            lambda_list: np.ndarray = np.array([0.0, 0.1, 0.3, 0.5, 0.6, 0.7, 0.8], dtype=np.float32)
+    elif dataset_name == 'dna':
+        if reg_type.lower() == 'l2':
+            lambda_list: np.ndarray = np.unique(np.concatenate([np.logspace(-6, -2, num=5) ,np.linspace(0.01, 0.1, num=10)])).astype(np.float32)
+        elif reg_type.lower() == 'dropout':
+            # For dropout, reg_val represents the dropout rate; typically between 0.1 and 0.9
+            lambda_list: np.ndarray = np.array([0.0, 0.1, 0.3, 0.5, 0.6, 0.7, 0.8], dtype=np.float32)
+    else:
+        if reg_type.lower() == 'l2':
+            lambda_list: np.ndarray = np.logspace(-6, 0, 7).astype(np.float32)
+        elif reg_type.lower() == 'dropout':
+            # For dropout, reg_val represents the dropout rate; typically between 0.1 and 0.9
+            lambda_list: np.ndarray = np.array([0.0, 0.1, 0.3, 0.5, 0.6, 0.7, 0.8], dtype=np.float32)
+    return lambda_list
+
 def run_experiment(
     datasets: Dict[str, Tuple[np.ndarray, np.ndarray]],
     reg_type: str,
@@ -260,19 +297,8 @@ def run_experiment(
         ['dataset_name', 'reg_type', 'reg_val', 'loss', 'seed', 'data_size_pct']
     """
     # Define experiment parameters
-    seeds: List[int] = list(range(1, 31))  # Seeds 1 to 10
-    dataset_sizes_pct: List[int] = [2, 3, 4, 6, 8, 10]  # Dataset sizes in percentages
-
-    # Define lambda_list based on regularization type
-    if reg_type.lower() == 'l2':
-        lambda_list: List[float] = [10**i for i in range(0, -6, -1)]  # 10^0 to 10^-5
-    elif reg_type.lower() == 'dropout':
-        # For dropout, reg_val represents the dropout rate; typically between 0.1 and 0.9
-        lambda_list: List[float] = [0.0, 0.1, 0.3, 0.5, 0.8]
-    elif reg_type.lower() == 'none':
-        lambda_list: List[float] = [0.0]
-    else:
-        raise ValueError(f"Unsupported regularization type for experiment: {reg_type}")
+    seeds: List[int] = list(range(120, 140))  # Seeds 1 to 10
+    dataset_sizes_pct: np.ndarray = np.unique(np.concatenate([np.linspace(1, 10, num=10), np.linspace(10, 100, num=10)])).astype(np.int32) # Dataset sizes in percentages
 
     # Initialize a list to store all results
     results: List[Dict[str, any]] = []
@@ -300,8 +326,10 @@ def run_experiment(
         X_train_full, y_train_full = X[train_idx], y[train_idx]
         X_test, y_test = X[test_idx], y[test_idx]
 
-        # Iterate over each seed for reproducibility
+        # Define the list of regularization parameters
+        lambda_list = get_lambda_list(reg_type, dataset_name)
 
+        # Iterate over each seed for reproducibility
         for seed in tqdm(seeds, desc=f"Seeds for {dataset_name}", leave=False):
             # print(seed)
             torch.backends.cudnn.deterministic = True
@@ -323,7 +351,6 @@ def run_experiment(
                     replace=False
                 )
                 X_train_d, y_train_d = X_train_full[sampled_indices], y_train_full[sampled_indices]
-
                 # Iterate over each regularization parameter
                 for reg_val in lambda_list:
                     # Initialize the model with the current regularization parameters
@@ -335,9 +362,9 @@ def run_experiment(
                         dropout_rate=0.5,  # Default dropout rate; overridden if reg_type is 'dropout'
                         device=device
                     )
-
+                    
                     # Train the model on the sampled training data
-                    model.train(X_train_d, y_train_d, epochs=50, batch_size=32)  # Adjust epochs and batch_size as needed
+                    model.train(X_train_d, y_train_d, epochs=50, batch_size=32, total_steps=1000)  # Adjust epochs and batch_size as needed
 
                     # Evaluate the model on the test set to obtain the loss
                     loss = model.evaluate(X_test, y_test)
@@ -403,7 +430,10 @@ def load_datasets(dataset_paths: List[str]) -> Dict[str, Tuple[np.ndarray, np.nd
 dataset_paths = [
     'data/splice/splice.npz',
     'data/protein/protein.npz',
-    'data/dna/dna.npz'
+    'data/dna/dna.npz',
+    'data/twomoons/twomoons.npz',
+    'data/electricalFault/detect.npz',
+    'data/pokerdataset/poker.npz'
     # Add more dataset paths as needed
 ]
 
