@@ -12,7 +12,7 @@ import json
 from typing import Dict, Tuple, List
 from collections import OrderedDict
 import random
-
+import argparse
 # %%
 class GeneralizedDataset(Dataset):
     def __init__(self, data_path: str) -> None:
@@ -309,6 +309,14 @@ dataset_paths = [
     'data/pokerdataset/poker.npz'
 ]
 
+# Parse command-line arguments
+parser = argparse.ArgumentParser(description='Run experiments with different datasets and regularization types.')
+parser.add_argument('--d', type=int, required=True, help='An integer argument for demonstration purposes.')
+args = parser.parse_args()
+
+DS_2_RUN : str = dataset_paths[args.d]
+
+
 # List of regularization types
 reg_types = [
     'l2',
@@ -319,9 +327,8 @@ reg_types = [
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 # print(f"Using device: {device}")
 
-# Iterate over each dataset
-for dataset_path in dataset_paths:
-    # Extract dataset name from the file path
+def main(dataset_path):
+        # Extract dataset name from the file path
     dataset_name = os.path.splitext(os.path.basename(dataset_path))[0]
     
     # Load the current dataset
@@ -342,4 +349,5 @@ for dataset_path in dataset_paths:
         print(f"Results saved to '{csv_filename}'.")
 
 
-
+if __name__ == '__main__':
+    main(DS_2_RUN)
