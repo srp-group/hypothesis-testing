@@ -161,3 +161,4 @@ cython_debug/
 .vscode/
 logs/
 *_results.csv
+*.html
