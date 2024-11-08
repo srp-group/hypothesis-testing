@@ -308,20 +308,22 @@ dataset_paths = [
     'data/electricalFault/detect.npz',
     'data/pokerdataset/poker.npz'
 ]
-
-# Parse command-line arguments
-parser = argparse.ArgumentParser(description='Run experiments with different datasets and regularization types.')
-parser.add_argument('--d', type=int, required=True, help='An integer argument for demonstration purposes.')
-args = parser.parse_args()
-
-DS_2_RUN : str = dataset_paths[args.d]
-
-
-# List of regularization types
 reg_types = [
     'l2',
     'dropout'
 ]
+# Parse command-line arguments
+parser = argparse.ArgumentParser(description='Run experiments with different datasets and regularization types.')
+parser.add_argument('--d', type=int, required=True, help='An integer argument for demonstration purposes.')
+parser.add_argument('--r', type=int, required=True, help='An integer argument for demonstration purposes.')
+
+args = parser.parse_args()
+
+DS_2_RUN : str = dataset_paths[args.d]
+REG_2_RUN : str = reg_types[args.r]
+
+# List of regularization types
+
 
 # Specify the device ('cpu' or 'cuda' if GPU is available)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -335,18 +337,18 @@ def main(dataset_path):
     DS = GeneralizedDataset(data_path=dataset_path)
     dataset_x, dataset_y = DS.x, DS.y
     # Iterate over each regularization type
-    for reg_type in reg_types:
-        print(f"Applying regularization type: {reg_type}")
-        
-        # Run the experiment for the current dataset and regularization type
-        results_df = run_experiment(data=(dataset_x, dataset_y), dataset_name=dataset_name, reg_type=reg_type, device=device, batch_size=64, epochs=100)
-        
-        # Define the CSV filename based on dataset and regularization type
-        csv_filename = f'{dataset_name}_{reg_type}_results.csv'
-        
-        # Save the results to the CSV file
-        results_df.to_csv(csv_filename, index=False)
-        print(f"Results saved to '{csv_filename}'.")
+    reg_type = REG_2_RUN
+    print(f"Applying regularization type: {reg_type}")
+    
+    # Run the experiment for the current dataset and regularization type
+    results_df = run_experiment(data=(dataset_x, dataset_y), dataset_name=dataset_name, reg_type=reg_type, device=device, batch_size=64, epochs=100)
+    
+    # Define the CSV filename based on dataset and regularization type
+    csv_filename = f'{dataset_name}_{reg_type}_results.csv'
+    
+    # Save the results to the CSV file
+    results_df.to_csv(csv_filename, index=False)
+    print(f"Results saved to '{csv_filename}'.")
 
 
 if __name__ == '__main__':
