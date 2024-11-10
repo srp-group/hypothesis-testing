@@ -4,7 +4,7 @@
 #SBATCH --error=../out/%x_%j.err
 #SBATCH --mail-user=eyvazkhani@uni-hildesheim.de
 #SBATCH --mail-type=ALL
-#SBATCH --partition=STUDL
+#SBATCH --partition=STUD
 #SBATCH --gres=gpu:1
 
 source activate SRP_ENV

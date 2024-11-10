@@ -341,7 +341,7 @@ def main(dataset_path):
     print(f"Applying regularization type: {reg_type}")
     
     # Run the experiment for the current dataset and regularization type
-    results_df = run_experiment(data=(dataset_x, dataset_y), dataset_name=dataset_name, reg_type=reg_type, device=device, batch_size=64, epochs=100)
+    results_df = run_experiment(data=(dataset_x, dataset_y), dataset_name=dataset_name, reg_type=reg_type, device=device, batch_size=128, epochs=50)
     
     # Define the CSV filename based on dataset and regularization type
     csv_filename = f'{dataset_name}_{reg_type}_results.csv'
