@@ -45,12 +45,16 @@ class MLP(nn.Module):
         super().__init__()
 
         layer_sizes = [
-            (n_features, 1024),
-            (1024, 256),
-            (256, 1024),
-            (1024, 256),
-            (256, 1024),
-            (1024, 256)
+            (n_features, 2048),
+            (2048, 512),
+            (512, 2048),
+            (2048, 512),
+            (512, 2048),
+            (2048, 512),
+            (512, 2048),
+            (2048, 512),
+            (512, 2048),
+            (2048, 512)
         ]
 
         layers = []
@@ -190,7 +194,7 @@ def run_experiment(
     epochs: int
 ) -> pd.DataFrame:
     # Define experiment parameters
-    seeds: List[int] = list(range(1, 31))  # Seeds 1 to 30
+    seeds: List[int] = list(range(1))  # Seeds 1 to 30
     dataset_sizes_pct: np.ndarray = np.unique(np.concatenate([np.linspace(1, 10, num=10), np.linspace(10, 100, num=10)])).astype(np.int32) # Dataset sizes in percentages
     # Define the list of regularization parameters
     if reg_type.lower() == 'l2':
@@ -250,7 +254,7 @@ def run_experiment(
             X_train_d, y_train_d = X_train_full[sampled_indices], y_train_full[sampled_indices]
             # Iterate over each regularization parameter
             for reg_val in lambda_list:
-                for lr in np.logspace(-5, -1, 5):
+                for lr in np.logspace(-5, -2, 4):
                     # Initialize the model with the current regularization parameters
                     model = ModelWrapper(
                         reg_type=reg_type,

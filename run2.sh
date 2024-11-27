@@ -9,4 +9,4 @@
 
 source activate SRP_ENV
 # srun python main.py --r 37 --d "splice" --a "bald" --m "MLP"
-srun python hyperparameters/main2.py --d 1 --r 1
+srun python hyperparameters/main2.py --d 2 --r 1
