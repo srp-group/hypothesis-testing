@@ -194,7 +194,7 @@ def run_experiment(
     epochs: int
 ) -> pd.DataFrame:
     # Define experiment parameters
-    seeds: List[int] = list(range(1))  # Seeds 1 to 30
+    seeds: List[int] = list(range(1, 31))  # Seeds 1 to 30
     dataset_sizes_pct: np.ndarray = np.unique(np.concatenate([np.linspace(1, 10, num=10), np.linspace(10, 100, num=10)])).astype(np.int32) # Dataset sizes in percentages
     # Define the list of regularization parameters
     if reg_type.lower() == 'l2':
@@ -254,7 +254,7 @@ def run_experiment(
             X_train_d, y_train_d = X_train_full[sampled_indices], y_train_full[sampled_indices]
             # Iterate over each regularization parameter
             for reg_val in lambda_list:
-                for lr in np.logspace(-5, -2, 4):
+                for lr in np.logspace(-5, -1, 5):
                     # Initialize the model with the current regularization parameters
                     model = ModelWrapper(
                         reg_type=reg_type,
@@ -345,7 +345,10 @@ def main(dataset_path):
     print(f"Applying regularization type: {reg_type}")
     
     # Run the experiment for the current dataset and regularization type
-    results_df = run_experiment(data=(dataset_x, dataset_y), dataset_name=dataset_name, reg_type=reg_type, device=device, batch_size=128, epochs=50)
+    batch_size = 32
+    if dataset_name == 'protein':
+        batch_size = 64
+    results_df = run_experiment(data=(dataset_x, dataset_y), dataset_name=dataset_name, reg_type=reg_type, device=device, batch_size=batch_size, epochs=100)
     
     # Define the CSV filename based on dataset and regularization type
     csv_filename = f'{dataset_name}_{reg_type}_results.csv'
