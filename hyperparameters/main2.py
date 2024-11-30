@@ -130,21 +130,26 @@ class ModelWrapper:
     def train(self, train_loader: DataLoader) -> tuple:
         '''Equivalent to the training loop'''
         self.model.train()
+        total_loss = 0
+        total_acc = 0
         for inputs, targets in train_loader:
             targets = targets.to(self.device)
             inputs = inputs.to(self.device)
             predictions = self.model(inputs)
             loss = self.model.criterion(predictions, targets)
+            total_loss += loss.item()
             self.optimizer.zero_grad()
+            total_acc += self.model.calculate_accuracy(predictions, targets)
             loss.backward()
             self.optimizer.step()
-    
+        return total_loss/len(train_loader), total_acc/len(train_loader)
+
     def fit(self, train_loader: DataLoader, val_loader: DataLoader, epochs: int, paitient_factor: int = 10) -> tuple:
         '''An umbrella method on top of the training and validation loops'''
         best_val_loss = float('inf')
         patience_counter = 0
         for epoch_num in range(epochs):
-            self.train(train_loader)
+            train_loss, train_acc = self.train(train_loader)
             val_loss, val_acc = self.eval(val_loader)
             # Check for improvement
             if val_loss < best_val_loss:  # Lower is better 
@@ -155,7 +160,7 @@ class ModelWrapper:
             # Early stopping
             if patience_counter >= paitient_factor:
                 break
-        return best_val_loss, val_acc
+        return train_loss, train_acc, best_val_loss, val_acc
 
 def get_lambda_list(reg_type: str, dataset_name: str) -> np.ndarray:
     # Define lambda_list based on regularization type
@@ -281,7 +286,7 @@ def run_experiment(
                     )
                     validation_loader = DataLoader(validation_dataset, batch_size=batch_size, shuffle=False)
                     
-                    loss, val_acc = model.fit(train_loader, validation_loader, epochs=epochs)
+                    train_loss, train_acc, loss, val_acc = model.fit(train_loader, validation_loader, epochs=epochs)
                     
                     # Store the results
                     results.append({
@@ -292,7 +297,9 @@ def run_experiment(
                         'seed': seed,
                         'data_size_pct': d,
                         'val_acc': val_acc,
-                        "lr": lr
+                        "lr": lr,
+                        'train_loss': train_loss,
+                        'train_acc': train_acc,
                     })
 
     print(f"Completed processing for dataset: {dataset_name}\n")
@@ -318,14 +325,11 @@ reg_types = [
 ]
 # Parse command-line arguments
 parser = argparse.ArgumentParser(description='Run experiments with different datasets and regularization types.')
-parser.add_argument('--d', type=int, required=True, help='An integer argument for demonstration purposes.')
+parser.add_argument('--d', type=int, required=False, help='An integer argument for demonstration purposes.')
 parser.add_argument('--r', type=int, required=False, help='An integer argument for demonstration purposes.')
 
 args = parser.parse_args()
 
-DS_2_RUN : str = dataset_paths[args.d]
-
-# List of regularization types
 
 
 # Specify the device ('cpu' or 'cuda' if GPU is available)
@@ -358,9 +362,15 @@ def main(dataset_path, reg_type):
 
 
 if __name__ == '__main__':
-    if args.r is None:
+    if args.d is None:
         for reg_type in reg_types:
-            main(DS_2_RUN, reg_type)
+            for dataset_path in dataset_paths[:-2]:
+                main(dataset_path, reg_type)
     else:
-        REG_2_RUN : str = reg_types[args.r]
-        main(DS_2_RUN, REG_2_RUN)
+        DS_2_RUN : str = dataset_paths[args.d]
+        if args.r is None:
+            for reg_type in reg_types:
+                main(DS_2_RUN, reg_type)
+        else:
+            REG_2_RUN : str = reg_types[args.r]
+            main(DS_2_RUN, REG_2_RUN)
