@@ -199,7 +199,7 @@ def run_experiment(
     epochs: int
 ) -> pd.DataFrame:
     # Define experiment parameters
-    seeds: List[int] = list(range(1, 31))  # Seeds 1 to 30
+    seeds: List[int] = list(range(1))  # Seeds 1 to 30
     dataset_sizes_pct: np.ndarray = np.unique(np.concatenate([np.linspace(1, 10, num=10), np.linspace(10, 100, num=10)])).astype(np.int32) # Dataset sizes in percentages
     # Define the list of regularization parameters
     if reg_type.lower() == 'l2':
