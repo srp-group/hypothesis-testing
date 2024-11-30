@@ -8,4 +8,4 @@
 #SBATCH --gres=gpu:1
 
 source activate SRP_ENV
-srun python hyperparameters/main2.py --d 4
+srun python hyperparameters/main2.py --d 3

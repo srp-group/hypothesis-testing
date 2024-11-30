@@ -9,4 +9,4 @@
 
 source activate SRP_ENV
 # srun python main.py --r 37 --d "protein" --a "bald" --m "MLP"
-srun python hyperparameters/main2.py --d 3
+srun python hyperparameters/main2.py --d 2

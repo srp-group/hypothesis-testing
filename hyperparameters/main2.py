@@ -319,12 +319,11 @@ reg_types = [
 # Parse command-line arguments
 parser = argparse.ArgumentParser(description='Run experiments with different datasets and regularization types.')
 parser.add_argument('--d', type=int, required=True, help='An integer argument for demonstration purposes.')
-parser.add_argument('--r', type=int, required=True, help='An integer argument for demonstration purposes.')
+parser.add_argument('--r', type=int, required=False, help='An integer argument for demonstration purposes.')
 
 args = parser.parse_args()
 
 DS_2_RUN : str = dataset_paths[args.d]
-REG_2_RUN : str = reg_types[args.r]
 
 # List of regularization types
 
@@ -333,7 +332,7 @@ REG_2_RUN : str = reg_types[args.r]
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 # print(f"Using device: {device}")
 
-def main(dataset_path):
+def main(dataset_path, reg_type):
         # Extract dataset name from the file path
     dataset_name = os.path.splitext(os.path.basename(dataset_path))[0]
     
@@ -341,7 +340,7 @@ def main(dataset_path):
     DS = GeneralizedDataset(data_path=dataset_path)
     dataset_x, dataset_y = DS.x, DS.y
     # Iterate over each regularization type
-    reg_type = REG_2_RUN
+    reg_type = reg_type
     print(f"Applying regularization type: {reg_type}")
     
     # Run the experiment for the current dataset and regularization type
@@ -359,4 +358,9 @@ def main(dataset_path):
 
 
 if __name__ == '__main__':
-    main(DS_2_RUN)
+    if args.r is None:
+        for reg_type in reg_types:
+            main(DS_2_RUN, reg_type)
+    else:
+        REG_2_RUN : str = reg_types[args.r]
+        main(DS_2_RUN, REG_2_RUN)
