@@ -45,17 +45,26 @@ class MLP(nn.Module):
         super().__init__()
 
         layer_sizes = [
-            (n_features, 2048),
-            (2048, 512),
-            (512, 2048),
-            (2048, 512),
-            (512, 2048),
-            (2048, 512),
-            (512, 2048),
-            (2048, 512),
-            (512, 2048),
-            (2048, 512)
+            (n_features, 1024),
+            (1024, 256),
+            (256, 1024),
+            (1024, 256),
+            (256, 1024),
+            (1024, 256)
         ]
+        
+        # layer_sizes = [
+        #     (n_features, 2048),
+        #     (2048, 512),
+        #     (512, 2048),
+        #     (2048, 512),
+        #     (512, 2048),
+        #     (2048, 512),
+        #     (512, 2048),
+        #     (2048, 512),
+        #     (512, 2048),
+        #     (2048, 512)
+        # ]
 
         layers = []
         for i, (in_size, out_size) in enumerate(layer_sizes):
@@ -348,10 +357,12 @@ def main(dataset_path, reg_type):
     print(f"Applying regularization type: {reg_type}")
     
     # Run the experiment for the current dataset and regularization type
-    batch_size = 32
+    batch_size = 64
+    epochs = 100
     if dataset_name == 'protein':
-        batch_size = 64
-    results_df = run_experiment(data=(dataset_x, dataset_y), dataset_name=dataset_name, reg_type=reg_type, device=device, batch_size=batch_size, epochs=100)
+        batch_size = 128
+        epochs = 50
+    results_df = run_experiment(data=(dataset_x, dataset_y), dataset_name=dataset_name, reg_type=reg_type, device=device, batch_size=batch_size, epochs=epochs)
     
     # Define the CSV filename based on dataset and regularization type
     csv_filename = f'{dataset_name}_{reg_type}_results.csv'
