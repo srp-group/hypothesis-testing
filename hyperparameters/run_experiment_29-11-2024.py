@@ -552,7 +552,7 @@ Total Run Time: {formatted_total_time}
     with open(summary_filename, "w") as f:
         f.write(summary_text)
 
-    tqdm.write(f"Summary saved to '{summary_filename}'.")
+    tqdm.write(f"Summary saved to '{summary_filename}'.") 
 
 
 if __name__ == "__main__":
