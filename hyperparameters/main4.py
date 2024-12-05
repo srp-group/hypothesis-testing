@@ -1,4 +1,5 @@
 # %%
+import math
 import pandas as pd
 import numpy as np
 import torch
@@ -38,7 +39,7 @@ class GeneralizedDataset(Dataset):
 class MLP(nn.Module):
     def __init__(self, n_features: int,
                 n_classes: int,
-                no_layers: int,
+                no_blocks: int,
                 small_hidden_size: int,
                 big_hidden_size: int) -> None:
         """
@@ -49,18 +50,19 @@ class MLP(nn.Module):
         - n_classes (int): Number of output classes.
         """
         super().__init__()
-        if no_layers % 2 != 0:
-            raise ValueError("Number of layers must be even.")
         # Define the layers
         layers = []
-        for i in range(no_layers):
+        for i in range(no_blocks):
             if i == 0:
-                layers.append(('dense_{}'.format(i), nn.Linear(n_features, big_hidden_size)))
-            elif i % 2 == 1:
-                layers.append(('dense_{}'.format(i), nn.Linear(big_hidden_size, small_hidden_size)))
+                layers.append(('dense_big_{}'.format(i), nn.Linear(n_features, big_hidden_size)))
+                layers.append(('activation_big_{}'.format(i), nn.ReLU()))
+                layers.append(('dense_small_{}'.format(i), nn.Linear(big_hidden_size, small_hidden_size)))
+                layers.append(('activation_small_{}'.format(i), nn.ReLU()))
             else:
-                layers.append(('dense_{}'.format(i), nn.Linear(small_hidden_size, big_hidden_size)))
-            layers.append(('activation_{}'.format(i), nn.ReLU()))
+                layers.append(('dense_big_{}'.format(i), nn.Linear(small_hidden_size, big_hidden_size)))
+                layers.append(('activation_big_{}'.format(i), nn.ReLU()))
+                layers.append(('dense_small_{}'.format(i), nn.Linear(big_hidden_size, small_hidden_size)))
+                layers.append(('activation_small_{}'.format(i), nn.ReLU()))            
         # Output layer without Softmax
         layers.append(('dense_output', nn.Linear(small_hidden_size, n_classes)))
         self.layers = nn.Sequential(OrderedDict(layers))
@@ -82,19 +84,20 @@ class ModelWrapper:
         n_features: int,
         n_classes: int,
         device: str,
-        no_layers: int,
+        no_blocks: int,
         small_hidden_size: int,
-        big_hidden_size: int
+        big_hidden_size: int,
+        learning_rate: float
         ) -> None:
         self.device = device
         self.model = MLP(
             n_features=n_features,
             n_classes=n_classes,
-            no_layers=no_layers,
+            no_blocks=no_blocks,
             small_hidden_size=small_hidden_size,
             big_hidden_size=big_hidden_size
         ).to(self.device)
-        self.optimizer = torch.optim.Adam(self.model.parameters())
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
 
     def eval(self, loader: DataLoader) -> tuple:
         '''Equivalent to the test loop. Used by both test and validation.'''
@@ -157,16 +160,18 @@ class HyperparameterTuner:
 
     def objective(self, trial: optuna.trial) -> float:
         # CREATE MODEL      
-        no_layers = trial.suggest_categorical("no_layers", [2, 4, 6, 8, 10])
-        small_hidden_size = trial.suggest_categorical("small_hidden_size", [8, 16, 32, 64, 128, 256])
-        big_hidden_size = trial.suggest_categorical("big_hidden_size", [128, 256, 512, 1024, 2048, 4096])
+        no_blocks = trial.suggest_int("no_blocks", 1, 10)
+        small_hidden_size = trial.suggest_int("small_hidden_size", 1, 8)
+        big_hidden_size = trial.suggest_int("big_hidden_size", 8, 12)
+        learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-1)
         model = ModelWrapper(
             n_classes=self.n_classes,
             n_features=self.n_features,
             device=self.device,
-            no_layers=no_layers,
-            small_hidden_size=small_hidden_size,
-            big_hidden_size=big_hidden_size
+            no_blocks=no_blocks,
+            small_hidden_size=int(math.pow(2, small_hidden_size)),
+            big_hidden_size=int(math.pow(2, big_hidden_size)),
+            learning_rate=learning_rate
         )
         train_dataset = TensorDataset(
             torch.tensor(self.X_train, dtype=torch.float32),
@@ -191,18 +196,14 @@ class HyperparameterTuner:
         return loss
 
     def tune(self) -> None:
-        search_space = {
-            "no_layers": [2, 4, 6, 8, 10],
-            "small_hidden_size": [8, 16, 32, 64, 128, 256],
-            "big_hidden_size": [128, 256, 512, 1024, 2048, 4096]
-        }
-        study = optuna.create_study(direction="minimize", sampler=optuna.samplers.GridSampler(search_space=search_space, seed=42))
-        study.optimize(self.objective, n_trials=180)
-        best_no_layers = study.best_params['no_layers']
+        study = optuna.create_study(direction="minimize", sampler=optuna.samplers.TPESampler(seed=42))
+        study.optimize(self.objective, n_trials=500)
+        best_no_blocks = study.best_params['no_blocks']
         best_big_hidden_size = study.best_params['big_hidden_size']
         best_small_hidden_size = study.best_params['small_hidden_size']
+        best_learning_rate = study.best_params['learning_rate']
         trials_df = study.trials_dataframe()
-        return best_no_layers, best_small_hidden_size, best_big_hidden_size, trials_df
+        return best_no_blocks, best_small_hidden_size, best_big_hidden_size, best_learning_rate, trials_df
 
 # %%
 # List of dataset file paths
@@ -242,9 +243,12 @@ def main(dataset_path):
     )
     X_train_full, y_train_full = X[train_idx], y[train_idx]
     X_test, y_test = X[test_idx], y[test_idx]
+    # Ensure that the training and testing sets are disjoint
+    # and we do not leak information from the test set to the training set
+    assert len(np.intersect1d(train_idx, test_idx)) == 0
     # Define the CSV filename based on dataset and regularization type
     csv_filename = f'{dataset_name}_ARCH_HPO_results.csv'
-    best_no_layers, best_small_hidden_size, best_big_hidden_size, trials_df = HyperparameterTuner(
+    best_no_blocks, best_small_hidden_size, best_big_hidden_size, best_learning_rate, trials_df = HyperparameterTuner(
         n_classes=n_classes,
         n_features=n_features,
         X_train=X_train_full,
@@ -256,9 +260,10 @@ def main(dataset_path):
     ).tune()
     # Save the results to the CSV file
     trials_df.to_csv(csv_filename, index=False)
-    print(f'Best number of layers: {best_no_layers}')
+    print(f'Best number of layers: {best_no_blocks}')
     print(f'Best small hidden size: {best_small_hidden_size}')
     print(f'Best big hidden size: {best_big_hidden_size}')
+    print(f'Best learning rate: {best_learning_rate}')
     print(f"Results saved to '{csv_filename}'.")
 
 
