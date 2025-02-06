@@ -54,6 +54,15 @@ class MLP(nn.Module):
         ]
         
         # layer_sizes = [
+        #     (n_features, 512),
+        #     (512, 128),
+        #     (128, 512),
+        #     (512, 128),
+        #     (128, 512),
+        #     (512, 128)
+        # ]
+
+        # layer_sizes = [
         #     (n_features, 2048),
         #     (2048, 512),
         #     (512, 2048),
@@ -208,7 +217,7 @@ def run_experiment(
     epochs: int
 ) -> pd.DataFrame:
     # Define experiment parameters
-    seeds: List[int] = list(range(1, 31))  # Seeds 1 to 30
+    seeds: List[int] = list(range(31, 61))  # Seeds 1 to 30
     dataset_sizes_pct: np.ndarray = np.unique(np.concatenate([np.linspace(1, 10, num=10), np.linspace(10, 100, num=10)])).astype(np.int32) # Dataset sizes in percentages
     # Define the list of regularization parameters
     if reg_type.lower() == 'l2':
