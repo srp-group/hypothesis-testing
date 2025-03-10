@@ -151,7 +151,7 @@ def run_experiment(data, dataset_name, device, params, start_time):
     patience = params["patience"]
     lr_rates = params["lr_rates"]
     lambda_list_dropout = params["lambda_list_dropout"]
-    seeds = list(range(1, 2))  # Seeds 1 to 30
+    seeds = list(range(1, 31))  # Seeds 1 to 30
     results = []
 
     X = np.asarray(data[0], dtype=np.float32)
