@@ -9,4 +9,4 @@
 
 source activate SRP_ENV
 # srun python main.py --r 42 --d "dna" --a "random" --m "MLP"
-srun python hyperparameters/main5.py --d 0
+srun python hyperparameters/main5.py --d 4

@@ -275,6 +275,11 @@ def main():
         'data/protein/protein.npz',
         'data/dna/dna.npz',
         'data/twomoons/twomoons.npz',
+        # 4
+        "data/spambase/spambase.npz",
+        "data/phoneme/phoneme.npz",
+        "data/ozone-level-8hr/ozone-level-8hr.npz",
+        "data/kc1/kc1.npz"
     ]
 
     if args.d < 0 or args.d >= len(dataset_paths):
