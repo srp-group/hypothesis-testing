@@ -280,6 +280,11 @@ def main():
         "data/phoneme/phoneme.npz",
         "data/ozone-level-8hr/ozone-level-8hr.npz",
         "data/kc1/kc1.npz"
+        # 8
+        "data/wilt/wilt.npz",
+        "data/Bioresponse/Bioresponse.npz",
+        "data/wall-robot-navigation/wall-robot-navigation.npz",
+        "data/texture/texture.npz"
     ]
 
     if args.d < 0 or args.d >= len(dataset_paths):
