@@ -279,7 +279,7 @@ def main():
         "data/spambase/spambase.npz",
         "data/phoneme/phoneme.npz",
         "data/ozone-level-8hr/ozone-level-8hr.npz",
-        "data/kc1/kc1.npz"
+        "data/kc1/kc1.npz",
         # 8
         "data/wilt/wilt.npz",
         "data/Bioresponse/Bioresponse.npz",
